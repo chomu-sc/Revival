@@ -26,7 +26,7 @@
   --on-accent:#FFFFFF; --strong:#1A1A1A; --on-strong:#FFFFFF; --warn:#B4461B; --warn-tint:#FCEBE3;
   --bar:#9DB6EE; --target:#D2561A; --scrim:rgba(15,20,35,.45); --shadow:rgba(26,26,26,.18);
   --o-bg:#E8EDFB; --o-fg:#1E3F9E; --x-bg:#EEEFF3; --x-fg:#3F4452; --w-bg:#DFF0F5; --w-fg:#14596B; --h-bg:#FCEBDD; --h-fg:#8A3D0B;
-  --day:block; --night:none; --hero-ink:#2A2620;
+  --day:block; --night:none; --day-op:1; --night-op:0; --hero-ink:#2A2620;
   --font:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -35,7 +35,7 @@
   --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
   --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
   --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
-  --day:none; --night:block; --hero-ink:#F3EBD2; color-scheme:dark;
+  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#0E1424; --surface:#18203A; --line:#26304D; --fg:#E9ECF5; --muted:#B4BBCD; --faint:#9AA3BB;
@@ -43,12 +43,11 @@
   --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
   --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
   --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
-  --day:none; --night:block; --hero-ink:#F3EBD2; color-scheme:dark;
+  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; color-scheme:dark;
 }
 html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased;word-break:keep-all;zoom:var(--ui-zoom,1)}
-.theme-anim,.theme-anim *,.theme-anim *::before,.theme-anim *::after{transition:background-color .5s ease,color .5s ease,border-color .5s ease,box-shadow .5s ease!important}
-::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:ease}
+.theme-anim,.theme-anim *,.theme-anim *::before,.theme-anim *::after{transition:background-color .8s ease,color .8s ease,border-color .8s ease,box-shadow .8s ease,fill .8s ease,opacity .8s ease!important}
 .celebrate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:var(--scrim);animation:cel-in .25s ease;cursor:pointer}
 .celebrate.out{opacity:0;transition:opacity .4s ease}
 .celebrate canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -58,6 +57,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px
 .celebrate-card span{font-size:14px;color:var(--muted);line-height:1.6}
 @keyframes cel-in{from{opacity:0}to{opacity:1}}
 @keyframes cel-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.install summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:28px}
+.install summary::-webkit-details-marker{display:none}
+.install summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(45deg);transition:transform .2s}
+.install[open] summary::after{transform:rotate(-135deg)}
+.install ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.65;color:var(--muted)}
+.install ol b{color:var(--fg)}
 .size-opt{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .size-sample{color:var(--muted)}
 #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
@@ -72,9 +77,11 @@ h1,h2,h3{text-wrap:balance}
 .hero{position:relative;height:224px;overflow:hidden}
 .hero.tall{height:280px}
 .hero svg.scene{position:absolute;inset:0;width:100%;height:100%;display:block}
-.scene-day,.logo-day{display:var(--day)!important}
-.scene-night,.logo-night{display:var(--night)!important}
-.hero h1{position:absolute;left:0;right:0;top:96px;margin:0;display:flex;justify-content:center}
+.hero .scene,.hero h1 img{transition:opacity .8s ease}
+.scene-day,.logo-day{opacity:var(--day-op)}
+.scene-night,.logo-night{opacity:var(--night-op)}
+.hero h1{position:absolute;left:0;right:0;top:96px;margin:0;display:grid;justify-items:center}
+.hero h1 img{grid-area:1/1}
 .hero.tall h1{top:112px}
 .hero h1 img{width:min(300px,78%);height:auto}
 .hero .hero-btn{position:absolute;top:12px;right:max(8px,env(safe-area-inset-right,0px));color:var(--hero-ink)}
@@ -804,7 +811,7 @@ function calHtml(target, value, min, max){
 const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
 function subHead(title, back='내 정보', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
 function meHtml(){
-  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, inbox:pageInbox, account:pageAccount}[S.page])();
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
@@ -819,7 +826,7 @@ function meHtml(){
     <section class="group"><h2>설정</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${(FONT_SCALES[S.fontScale]||FONT_SCALES.md)[0]}`,'data-v="theme"')}</div></section>
-    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
+    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
   </div>`;
@@ -841,6 +848,30 @@ function pageInbox(){
       <p class="content">${esc(q.content)}</p>
     </article>`).join('');
   return subHead('받은 문의') + `<div class="settings pad">${list ? `<div class="list" style="padding:0">${list}</div>` : '<p class="empty">아직 받은 문의가 없어요.</p>'}</div>`;
+}
+const isStandalone = () => { try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } };
+const deviceKind = () => { const ua = navigator.userAgent || ''; if(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios'; if(/Android/.test(ua)) return 'android'; return 'other'; };
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if(S.page === 'install') render(); });
+window.addEventListener('appinstalled', () => { installPrompt = null; toast('홈 화면에 추가했어요'); if(S.page === 'install') render(); });
+function pageInstall(){
+  const kind = deviceKind();
+  const steps = (title, items, open) => `<details class="panel install" ${open ? 'open' : ''}><summary><h2 style="display:inline">${title}</h2></summary><ol>${items.map(i => `<li>${i}</li>`).join('')}</ol></details>`;
+  const ios = steps('아이폰 · 아이패드 (Safari)', [
+    '<b>Safari</b>로 이 앱 주소를 열어요. 카카오톡 안에서 열렸다면 오른쪽 아래 메뉴에서 「Safari로 열기」를 먼저 눌러요.',
+    '화면 아래(또는 위)의 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요. 안 보이면 <b>⋯</b> 버튼을 먼저 눌러요.',
+    '목록을 내려 <b>「홈 화면에 추가」</b>를 눌러요.',
+    '이름이 「기도와 말씀」인지 확인하고 오른쪽 위 <b>「추가」</b>를 눌러요.'], kind === 'ios');
+  const android = steps('안드로이드 (Chrome · 삼성 인터넷)', [
+    '<b>Chrome</b>이나 <b>삼성 인터넷</b>으로 이 앱 주소를 열어요. 카카오톡 안에서 열렸다면 오른쪽 위 ⋮에서 「다른 브라우저로 열기」를 먼저 눌러요.',
+    'Chrome: 오른쪽 위 <b>⋮</b> 메뉴 → <b>「홈 화면에 추가」</b> 또는 <b>「앱 설치」</b>를 눌러요.',
+    '삼성 인터넷: 아래쪽 <b>≡</b> 메뉴 → <b>「현재 페이지 추가」</b> → <b>「홈 화면」</b>을 눌러요.',
+    '<b>「추가」</b> 또는 <b>「설치」</b>를 누르면 홈 화면에 「기도와 말씀」 아이콘이 생겨요.'], kind === 'android');
+  return subHead('홈 화면에 추가하기') + `<div class="settings pad">
+    ${isStandalone() ? `<div class="note">${I.check(18)}<span>지금 홈 화면 앱으로 쓰고 있어요.</span></div>` : ''}
+    ${installPrompt && !isStandalone() ? `<section class="panel"><p class="lead" style="margin:0;font-size:14px">이 기기에서는 버튼 한 번으로 설치할 수 있어요.</p><button class="btn btn-accent btn-block" data-act="installApp">${I.plus(18)}홈 화면에 추가하기</button></section>` : ''}
+    <p class="lead" style="font-size:14px;margin:0 4px">홈 화면에 추가하면 주소를 다시 칠 필요 없이 아이콘을 눌러 앱처럼 바로 열 수 있어요.</p>
+    ${kind === 'android' ? android + ios : ios + android}</div>`;
 }
 function pageAccount(){
   return subHead('계정') + `<div class="settings pad">
@@ -1124,17 +1155,17 @@ async function boot(){
 async function start(){
   if(S.theme !== 'system') applyTheme();
   applyFontScale();
-  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(S.theme === 'system'){ const r = document.documentElement; r.classList.add('theme-anim'); setTimeout(() => r.classList.remove('theme-anim'), 650); } }); }catch(e){}
+  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(S.theme === 'system') withThemeTransition(() => {}); }); }catch(e){}
   render();
   try{ await API.init(); S.fatal = ''; }
   catch(e){ S.fatal = errMsg(e); S.ready = true; render(); return; }
   await boot();
 }
+let themeAnimTimer;
 function withThemeTransition(fn){
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!reduce && document.startViewTransition){ try{ document.startViewTransition(fn); return; }catch(e){} }
   const r = document.documentElement;
-  if(!reduce){ r.classList.add('theme-anim'); setTimeout(() => r.classList.remove('theme-anim'), 650); }
+  if(!reduce){ r.classList.add('theme-anim'); clearTimeout(themeAnimTimer); themeAnimTimer = setTimeout(() => r.classList.remove('theme-anim'), 900); }
   fn();
 }
 function applyTheme(){ const r = document.documentElement; if(S.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); }
@@ -1259,6 +1290,7 @@ const ACT = {
     const done = () => toast(`입장 코드 ${d.v}를 복사했어요`);
     try{ navigator.clipboard.writeText(d.v).then(done, () => toast(`입장 코드: ${d.v}`)); }catch(e){ toast(`입장 코드: ${d.v}`); }
   },
+  async installApp(){ if(!installPrompt) return; installPrompt.prompt(); try{ await installPrompt.userChoice; }catch(e){} installPrompt = null; render(); },
   planScope(d){ S.draft.plan.scope = d.v; render(); },
   planTimes(d){ S.draft.plan.times = Math.min(10, Math.max(1, S.draft.plan.times + Number(d.v))); render(); },
   savePlan(){
@@ -1268,7 +1300,11 @@ const ACT = {
   },
   prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
   prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
-  theme(d){ withThemeTransition(() => { S.theme = d.v; lsSet('theme', d.v); applyTheme(); render(); }); },
+  theme(d){
+    withThemeTransition(() => { S.theme = d.v; lsSet('theme', d.v); applyTheme(); });
+    // 화면을 다시 그리지 않고 체크 표시만 옮겨야 색이 자연스럽게 바뀌어요
+    document.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.v === d.v; b.setAttribute('aria-pressed', String(on)); const v = b.querySelector('.val'); if(v) v.innerHTML = on ? I.check(20) : ''; });
+  },
   fontScale(d){ S.fontScale = d.v; lsSet('fontScale', d.v); applyFontScale(); render(); },
   authMode(d){ S.authMode = d.v; S.authMsg = null; render(); },
   signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; S.authMode = 'login'; S.draft.auth = null; }); },
