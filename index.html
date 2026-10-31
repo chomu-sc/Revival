@@ -1233,6 +1233,7 @@ const FORMS = {
           if(!(await API.checkCode(code))){ S.authMsg = {text:errMsg({message:'BAD_CODE'})}; return; }
         }
         const data = signup ? await API.signUp(email, pw, code) : await API.signIn(email, pw);
+        if(signup && !data?.session && data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){ S.authMode = 'login'; S.draft.auth.code = ''; S.authMsg = {text:'이미 가입된 이메일이에요. 로그인해 주세요. 비밀번호가 기억나지 않으면 관리자에게 문의해 주세요.'}; return; }
         if(data?.session){ S.draft.auth = null; S.session = data.session; S.groupId = null; S.ready = false; render(); await boot(); }
         else if(signup){ S.draft.auth.pw = ''; S.draft.auth.code = ''; S.authMode = 'login'; S.authMsg = {ok:true, text:`${email}로 확인 메일을 보냈어요. 메일의 「가입 확인」 링크를 누르면 바로 로그인돼요. 메일이 안 보이면 스팸함도 확인해 주세요.`}; }
       }catch(e){ S.authMsg = {text:errMsg(e)}; }
