@@ -64,6 +64,17 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px
 .install[open] summary::after{transform:rotate(-135deg)}
 .install ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.65;color:var(--muted)}
 .install ol b{color:var(--fg)}
+.size-panel{gap:12px}
+.size-now{font-size:14px;color:var(--accent-ink)}
+.size-preview{margin:0;padding:14px 16px;border-radius:12px;background:var(--soft);color:var(--fg);line-height:1.6;min-height:3.2em;display:flex;align-items:center;transition:font-size .15s ease}
+.fs-range{-webkit-appearance:none;appearance:none;width:100%;height:36px;margin:0;background:transparent;cursor:pointer;touch-action:pan-y}
+.fs-range::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(to right,var(--accent) 0 var(--fill,25%),var(--accent-tint) var(--fill,25%) 100%)}
+.fs-range::-moz-range-track{height:8px;border-radius:4px;background:var(--accent-tint)}
+.fs-range::-moz-range-progress{height:8px;border-radius:4px;background:var(--accent)}
+.fs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 2px 6px var(--shadow)}
+.fs-range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 2px 6px var(--shadow)}
+.fs-range:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+.size-ticks{display:flex;justify-content:space-between;align-items:flex-end;padding:0 6px;color:var(--faint);margin-top:-6px}
 .size-opt{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .size-sample{color:var(--muted)}
 #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
@@ -368,10 +379,12 @@ const S = {
   ready:false, fatal:'', session:null, profile:null, groups:[], groupId: lsGet('groupId') || null,
   prayers:[], readings:[], board:[], todayReaders:0, inbox:[],
   tab:'pray', page:null, adminGroupId:null, members:[], prayTab:'active', bibleView:'check', testament:null, bookId:null, sel:new Set(), ansScope:'all',
-  sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', fontScale: lsGet('fontScale') || 'md', draft:{}
+  sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', fontStep: initFontStep(), draft:{}
 };
-const FONT_SCALES = {sm:['작게',0.92], md:['보통',1], lg:['크게',1.12], xl:['아주 크게',1.25]};
-function applyFontScale(){ document.documentElement.style.setProperty('--ui-zoom', String((FONT_SCALES[S.fontScale] || FONT_SCALES.md)[1])); }
+function initFontStep(){ const v = lsGet('fontStep'); if(v !== null && /^[0-4]$/.test(v)) return Number(v); return ({sm:0, md:1, lg:2, xl:3})[lsGet('fontScale')] ?? 1; }
+const FONT_STEPS = [['작게',0.9], ['보통',1], ['조금 크게',1.1], ['크게',1.2], ['아주 크게',1.32]];
+const fontLabel = () => FONT_STEPS[S.fontStep][0];
+function applyFontScale(){ document.documentElement.style.setProperty('--ui-zoom', String(FONT_STEPS[S.fontStep][1])); }
 const curGroup = () => S.groups.find(g => g.id === S.groupId) || null;
 const isSuper = () => !!S.profile?.is_super_admin;
 const canModerate = (g = curGroup()) => isSuper() || g?.my_role === 'admin';
@@ -864,7 +877,7 @@ function meHtml(){
     <section class="group"><h2>성경 통독</h2><div class="menu">${menuRow('page','통독 목표',planLabel(pr),'data-v="plan"')}</div></section>
     <section class="group"><h2>설정</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
-      ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${(FONT_SCALES[S.fontScale]||FONT_SCALES.md)[0]}`,'data-v="theme"')}</div></section>
+      ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${fontLabel()}`,'data-v="theme"')}</div></section>
     <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
@@ -974,9 +987,13 @@ function pageTheme(){
   return subHead('화면과 글자 크기') + `<div class="settings pad">
     <section class="group"><h2>화면</h2><div class="menu">${['system','light','dark'].map(v =>
       `<button class="menu-row" data-act="theme" data-v="${v}" aria-pressed="${S.theme===v}"><span>${THEME_NAME[v]}</span><span class="val" style="color:var(--accent)">${S.theme===v ? I.check(20) : ''}</span></button>`).join('')}</div></section>
-    <section class="group"><h2>글자 크기</h2><div class="menu">${Object.entries(FONT_SCALES).map(([k,[label,z]]) =>
-      `<button class="menu-row" data-act="fontScale" data-v="${k}" aria-pressed="${S.fontScale===k}"><span class="size-opt"><span style="font-size:${Math.round(15*z)}px">${label}</span><span class="size-sample" style="font-size:${Math.round(13*z)}px">가나다 123</span></span><span class="val" style="color:var(--accent)">${S.fontScale===k ? I.check(20) : ''}</span></button>`).join('')}</div>
-      <span class="hint" style="margin:0 4px">앱 전체의 글자와 버튼 크기가 함께 바뀌어요. 이 기기에만 저장돼요.</span></section></div>`;
+    <section class="group"><h2>글자 크기</h2><div class="panel size-panel">
+      <div class="between"><span class="label">미리보기</span><b class="size-now" id="size-label">${fontLabel()}</b></div>
+      <p class="size-preview" id="size-preview" style="font-size:${(15*FONT_STEPS[S.fontStep][1]/FONT_STEPS[S.fontStep][1]).toFixed(1)}px">함께 기도하고 말씀을 읽어요</p>
+      <input type="range" class="fs-range" id="font-range" min="0" max="4" step="1" value="${S.fontStep}" aria-label="글자 크기" aria-valuetext="${fontLabel()}" style="--fill:${S.fontStep*25}%">
+      <div class="size-ticks" aria-hidden="true">${FONT_STEPS.map(([l,z],i) => `<span style="font-size:${Math.round(12*z)}px">가</span>`).join('')}</div>
+      </div>
+      <span class="hint" style="margin:0 4px">막대를 좌우로 끌어 조절하고 손을 떼면 앱 전체에 적용돼요. 이 기기에만 저장돼요.</span></section></div>`;
 }
 function pageAdmin(){
   const list = isSuper() ? S.groups : S.groups.filter(g => g.my_role === 'admin');
@@ -1344,7 +1361,7 @@ const ACT = {
     // 화면을 다시 그리지 않고 체크 표시만 옮겨야 색이 자연스럽게 바뀌어요
     document.querySelectorAll('[data-act="theme"]').forEach(b => { const on = b.dataset.v === d.v; b.setAttribute('aria-pressed', String(on)); const v = b.querySelector('.val'); if(v) v.innerHTML = on ? I.check(20) : ''; });
   },
-  fontScale(d){ S.fontScale = d.v; lsSet('fontScale', d.v); applyFontScale(); render(); },
+
   authMode(d){ S.authMode = d.v; S.authMsg = null; render(); },
   signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; S.authMode = 'login'; S.draft.auth = null; }); },
   async demoRole(){ if(!IS_DEMO) return; await API.setSuper(!isSuper()); S.page = null; S.sheet = null; S.ready = false; render(); await boot(); toast(isSuper() ? '총 관리자 화면으로 바꿨어요' : '서버 관리자 화면으로 바꿨어요'); },
@@ -1453,6 +1470,18 @@ document.addEventListener('click', e => {
 function setModel(path, v){ const [o,k] = path.split('.'); if(k === undefined) S.draft[o] = v; else if(S.draft[o]) S.draft[o][k] = v; }
 document.addEventListener('input', e => { const m = e.target.dataset?.model; if(m && e.target.type !== 'checkbox') setModel(m, e.target.value); });
 document.addEventListener('change', e => { const el = e.target, m = el.dataset?.model; if(!m) return; setModel(m, el.type === 'checkbox' ? el.checked : el.value); });
+document.addEventListener('input', e => {
+  if(e.target.id !== 'font-range') return;
+  const i = Number(e.target.value), z = FONT_STEPS[i][1] / FONT_STEPS[S.fontStep][1];
+  const pv = document.getElementById('size-preview'); if(pv) pv.style.fontSize = (15*z).toFixed(1)+'px';
+  const lb = document.getElementById('size-label'); if(lb) lb.textContent = FONT_STEPS[i][0];
+  e.target.style.setProperty('--fill', (i*25)+'%'); e.target.setAttribute('aria-valuetext', FONT_STEPS[i][0]);
+});
+document.addEventListener('change', e => {
+  if(e.target.id !== 'font-range') return;
+  S.fontStep = Number(e.target.value); lsSet('fontStep', String(S.fontStep)); applyFontScale(); render();
+  setTimeout(() => { const r = document.getElementById('font-range'); if(r){ r.scrollIntoView({block:'center'}); r.focus({preventScroll:true}); } }, 0);
+});
 document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.dataset.form]?.(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
 setInterval(() => { const a = document.activeElement; if(S.ready && S.session && S.tab === 'pray' && !S.sheet && !(a && /INPUT|TEXTAREA/.test(a.tagName))) render(); }, 30000);
