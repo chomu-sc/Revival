@@ -18,6 +18,7 @@
 <body>
 <title>기도와 말씀</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap&text=%EC%84%B1%EA%B2%BD%ED%86%B5%EB%8F%85">
 <style>
 /* Layout: one phone-width column (max 480px). Sunrise/night hill hero on the prayer tab, fixed bottom nav, bottom sheets for writing. */
 :root{
@@ -26,7 +27,7 @@
   --on-accent:#FFFFFF; --strong:#1A1A1A; --on-strong:#FFFFFF; --warn:#B4461B; --warn-tint:#FCEBE3;
   --bar:#9DB6EE; --target:#D2561A; --scrim:rgba(15,20,35,.45); --shadow:rgba(26,26,26,.18);
   --o-bg:#E8EDFB; --o-fg:#1E3F9E; --x-bg:#EEEFF3; --x-fg:#3F4452; --w-bg:#DFF0F5; --w-fg:#14596B; --h-bg:#FCEBDD; --h-fg:#8A3D0B;
-  --day:block; --night:none; --day-op:1; --night-op:0; --hero-ink:#2A2620;
+  --day:block; --night:none; --day-op:1; --night-op:0; --hero-ink:#2A2620; --brush-ink:#22201A; --brush-accent:#B44016;
   --font:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -35,7 +36,7 @@
   --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
   --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
   --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
-  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; color-scheme:dark;
+  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; --brush-ink:#F6F1E4; --brush-accent:#6EAAFF; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#0E1424; --surface:#18203A; --line:#26304D; --fg:#E9ECF5; --muted:#B4BBCD; --faint:#9AA3BB;
@@ -43,7 +44,7 @@
   --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
   --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
   --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
-  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; color-scheme:dark;
+  --day:none; --night:block; --day-op:0; --night-op:1; --hero-ink:#F3EBD2; --brush-ink:#F6F1E4; --brush-accent:#6EAAFF; color-scheme:dark;
 }
 html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased;word-break:keep-all;zoom:var(--ui-zoom,1)}
@@ -90,6 +91,9 @@ h1,h2,h3{text-wrap:balance}
 /* common */
 .topbar{padding-block:28px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .topbar h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.brush{font-family:'Nanum Brush Script','Noto Sans KR',cursive;font-weight:400;font-size:52px;line-height:1;letter-spacing:.02em;color:var(--brush-ink);-webkit-text-stroke:.9px currentColor;transform:rotate(-2deg);display:inline-flex;gap:.06em;align-items:baseline;padding-block:4px 2px}
+.brush .a{color:var(--brush-accent);font-size:1.12em;transform:translateY(.04em) rotate(-3deg);display:inline-block}
+.brush .sp{width:.28em}
 .icon-btn{width:44px;height:44px;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;color:var(--fg);flex-shrink:0}
 .icon-btn:hover{background:var(--soft)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
@@ -666,7 +670,7 @@ function prayHtml(){
 
 function bibleHtml(){
   const pr = computeProgress(S.profile, S.readings);
-  return `<div class="topbar pad" style="background:var(--surface)"><h1>성경 통독</h1></div>
+  return `<div class="topbar pad" style="background:var(--surface)"><h1 class="brush" aria-label="성경 통독"><span class="a" aria-hidden="true">성</span><span aria-hidden="true">경</span><span class="sp"></span><span class="a" aria-hidden="true">통</span><span aria-hidden="true">독</span></h1></div>
     <div class="pad" style="background:var(--surface);padding-bottom:4px"><div class="seg" role="tablist">
       <button class="${S.bibleView==='check'?'on':''}" data-act="bibleView" data-v="check" aria-pressed="${S.bibleView==='check'}">읽은 장 체크</button>
       <button class="${S.bibleView==='stats'?'on':''}" data-act="bibleView" data-v="stats" aria-pressed="${S.bibleView==='stats'}">통계</button></div></div>` +

@@ -1,0 +1,29 @@
+<!-- 기도와 말씀 메일 템플릿: Supabase Authentication → Emails → Templates 의 Message body 에 통째로 붙여넣으세요 -->
+<div style="margin:0;padding:0;background:#F1EEF6;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F1EEF6;padding:32px 12px;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+<tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background:#FFFFFF;border-radius:22px;overflow:hidden;">
+    <tr><td align="center" style="background:#1F2152;background-image:linear-gradient(180deg,#1A1B48 0%,#3B2F6E 62%,#B9788A 100%);padding:36px 24px 30px;">
+      <img src="https://chomu-sc.github.io/Revival/icon-192.png" width="76" height="76" alt="" style="display:block;margin:0 auto 14px;border:0;border-radius:18px;">
+      <div style="color:#F6F1E4;font-size:22px;font-weight:700;letter-spacing:0.04em;">기도와 말씀</div>
+      <div style="color:#D8D2EA;font-size:13px;margin-top:6px;">함께 기도하고, 함께 말씀을 읽어요</div>
+    </td></tr>
+    <tr><td style="padding:34px 30px 6px;color:#1A1A1A;">
+      <div style="font-size:21px;font-weight:700;line-height:1.4;margin:0 0 12px;">가입을 환영해요</div>
+      <div style="font-size:15px;line-height:1.75;color:#4A4F5C;margin:0 0 26px;word-break:keep-all;">아래 버튼을 누르면 가입이 끝나고 바로 앱으로 들어가요.<br>함께 기도하고 말씀을 읽는 자리에 오신 것을 환영해요.</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="border-radius:14px;background:#2F5BD3;">
+        <a href="{{ .ConfirmationURL }}" style="display:block;padding:16px 24px;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none;border-radius:14px;">가입 확인하기</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td style="padding:22px 30px 6px;">
+      <div style="font-size:12px;line-height:1.7;color:#6B7080;word-break:keep-all;">버튼이 눌리지 않으면 아래 주소를 복사해 브라우저에 붙여넣어 주세요.</div>
+      <div style="font-size:12px;line-height:1.6;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#2F5BD3;">{{ .ConfirmationURL }}</a></div>
+    </td></tr>
+    <tr><td style="padding:18px 30px 30px;">
+      <div style="border-top:1px solid #E6E8EF;padding-top:16px;font-size:12px;line-height:1.7;color:#6B7080;word-break:keep-all;">직접 가입하지 않았다면 이 메일은 무시하셔도 돼요. 아무 일도 일어나지 않아요.</div>
+    </td></tr>
+  </table>
+  <div style="font-size:11px;color:#8A879A;margin-top:16px;">기도와 말씀 · 이 메일은 발신 전용이에요</div>
+</td></tr>
+</table>
+</div>
