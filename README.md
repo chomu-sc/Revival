@@ -1,4 +1,4 @@
-# 누군가 널 위해 기도하네
+# 기도와 말씀
 
 여러 사람이 기도제목을 나누고, 성경 통독을 함께 체크하는 웹앱이에요.
 
@@ -36,6 +36,7 @@
 |---|---|
 | `index.html` | 앱 전체 (GitHub Pages에 올리는 파일) |
 | `logo-light.png`, `logo-dark.png` | 라이트·다크모드 로고 |
+| `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `favicon-32.png`, `manifest.webmanifest` | 앱 아이콘과 홈 화면 설정 |
 | `supabase.sql` | 데이터베이스 설정 스크립트 |
 
 `index.html`의 Supabase 설정이 비어 있으면 **체험 모드**로 열려요. 체험 모드의 기록은 그 브라우저에만 저장돼요.
