@@ -350,7 +350,9 @@ function supabaseApi(){
       });
     },
     signIn: (email,password) => sb.auth.signInWithPassword({email,password}).then(chk),
-    signUp: (email,password) => sb.auth.signUp({email,password,options:{emailRedirectTo: location.origin + location.pathname}}).then(chk),
+    signUp: (email,password,code) => sb.auth.signUp({email,password,options:{emailRedirectTo: location.origin + location.pathname, data:{join_code: code}}}).then(chk),
+    checkCode: code => sb.rpc('check_group_code', {p_code:code}).then(chk),
+    lastGroup: () => rpc('my_last_group'),
     signOut: () => sb.auth.signOut(),
     loadProfile: () => sb.from('profiles').select('*').eq('id',uid()).single().then(chk),
     updateProfile: p => sb.from('profiles').update(p).eq('id',uid()).select().single().then(chk),
@@ -439,7 +441,9 @@ function demoApi(){
   return {
     async init(){ try{ db = JSON.parse(lsGet(KEY)); }catch(e){ db = null; } if(!db || db.v !== 2){ db = seed(); save(); } db.readings.forEach((r,i) => { if(r.id == null) r.id = i+1; }); S.session = sess(); },
     async signIn(email){ db.session = true; if(email) db.profile.email = email; save(); return {session:sess()}; },
-    async signUp(email){ return this.signIn(email); },
+    async signUp(email, pw, code){ const r = await this.signIn(email); const g = db.groups.find(x => x.code === String(code||'').trim().toUpperCase()); if(g){ const m = db.members.find(x => x.group_id === g.id && x.user_id === ME); if(m) m.joined_at = new Date().toISOString(); else db.members.push({group_id:g.id, user_id:ME, role:'member', joined_at:new Date().toISOString()}); } save(); return r; },
+    async checkCode(code){ return db.groups.some(x => x.code === String(code||'').trim().toUpperCase()); },
+    async lastGroup(){ const m = db.members.filter(x => x.user_id === ME).sort((a,b) => new Date(b.joined_at) - new Date(a.joined_at))[0]; return m ? m.group_id : null; },
     async signOut(){ db.session = false; save(); },
     async loadProfile(){ return {...db.profile}; },
     async updateProfile(p){ if(p.nickname && Object.values(db.users).some(u => u.nickname === p.nickname)) throw {code:'23505'}; Object.assign(db.profile, p); save(); return {...db.profile}; },
@@ -542,7 +546,7 @@ function heroHtml(tall, withBtn){
 
 const demoBar = () => {
   if(!IS_DEMO) return '';
-  if(!S.session) return `<div class="demo pad"><span>체험 모드 · 아무 이메일로 로그인하고 코드 GRACE7 또는 DAWN24를 넣어보세요</span></div>`;
+  if(!S.session) return `<div class="demo pad"><span>체험 모드 · 회원가입 코드 예시: GRACE7, DAWN24</span></div>`;
   return `<div class="demo pad"><span>체험 모드 · 이 브라우저에만 저장</span><span class="foot-actions">${S.profile ? `<button data-act="demoRole">${isSuper() ? '서버 관리자로 보기' : '총 관리자로 보기'}</button>` : ''}<button data-act="demoReset">처음 상태로</button></span></div>`;
 };
 
@@ -857,12 +861,14 @@ function pageAdminGroup(){
 
 function authHtml(){
   const signup = S.authMode === 'signup';
+  if(!S.draft.auth) S.draft.auth = {email:'', pw:'', code:''};
+  const A = S.draft.auth;
   return heroHtml(true, false) + demoBar() + `<div class="auth pad">
     <div class="seg"><button class="${!signup?'on':''}" data-act="authMode" data-v="login" aria-pressed="${!signup}">로그인</button><button class="${signup?'on':''}" data-act="authMode" data-v="signup" aria-pressed="${signup}">회원가입</button></div>
     <form data-form="auth">
-      <div class="field"><label class="label" for="auth-email">이메일</label><input id="auth-email" type="email" required autocomplete="email" placeholder="name@example.com"></div>
-      <div class="field"><label class="label" for="auth-pw">비밀번호</label><input id="auth-pw" type="password" required minlength="6" autocomplete="${signup?'new-password':'current-password'}" placeholder="6자 이상"></div>
-      <div class="field"><label class="label" for="auth-code">서버 입장 코드</label><input id="auth-code" type="text" class="code-input" maxlength="12" placeholder="모임에서 받은 코드" autocomplete="off" autocapitalize="characters"></div>
+      <div class="field"><label class="label" for="auth-email">이메일</label><input id="auth-email" type="email" required autocomplete="email" placeholder="name@example.com" value="${esc(A.email)}" data-model="auth.email"></div>
+      <div class="field"><label class="label" for="auth-pw">비밀번호</label><input id="auth-pw" type="password" required minlength="6" autocomplete="${signup?'new-password':'current-password'}" placeholder="6자 이상" value="${esc(A.pw)}" data-model="auth.pw"></div>
+      ${signup ? `<div class="field"><label class="label" for="auth-code">서버 입장 코드</label><input id="auth-code" type="text" class="code-input" required maxlength="12" placeholder="모임에서 받은 코드" autocomplete="off" autocapitalize="characters" value="${esc(A.code)}" data-model="auth.code"></div>` : ''}
       ${S.authMsg ? `<p class="msg ${S.authMsg.ok?'ok':''}" role="alert">${esc(S.authMsg.text)}</p>` : ''}
       <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>${signup ? '가입하기' : '로그인'}</button>
     </form></div>`;
@@ -961,7 +967,8 @@ function errMsg(e){
   if(m.includes('already registered')) return '이미 가입된 이메일이에요. 로그인해 주세요.';
   if(m.includes('Email not confirmed')) return '메일함에서 확인 링크를 먼저 눌러주세요.';
   if(m.includes('Password should be')) return '비밀번호는 6자 이상으로 정해주세요.';
-  if(m.includes('rate limit')) return '요청이 너무 많아요. 잠시 후 다시 해 주세요.';
+  if(m.includes('not authorized') || m.includes('email_address_not_authorized')) return '지금은 이 이메일로 확인 메일을 보낼 수 없어요. 관리자에게 알려주세요.';
+  if(m.includes('rate limit')) return '확인 메일을 너무 많이 보냈어요. 잠시 후 다시 해 주세요.';
   if(m.includes('Failed to fetch') || m.includes('NetworkError')) return '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.';
   return m || '문제가 생겼어요. 잠시 후 다시 해 주세요.';
 }
@@ -977,6 +984,7 @@ function pickGroup(){
 async function loadGroups(){
   if(isSuper()){ S.groups = (await API.loadGroups()) || []; pickGroup(); return; }
   let info = null;
+  if(!S.groupId){ try{ S.groupId = await API.lastGroup(); }catch(e){ S.groupId = null; } }
   if(S.groupId){ try{ info = await API.groupInfo(S.groupId); }catch(e){ info = null; } }
   S.groups = info ? [info] : [];
   if(!info){ S.groupId = null; lsSet('groupId', ''); }
@@ -1134,20 +1142,24 @@ const ACT = {
   prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
   theme(d){ S.theme = d.v; lsSet('theme', d.v); applyTheme(); render(); },
   authMode(d){ S.authMode = d.v; S.authMsg = null; render(); },
-  signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; }); },
+  signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; S.authMode = 'login'; S.draft.auth = null; }); },
   async demoRole(){ if(!IS_DEMO) return; await API.setSuper(!isSuper()); S.page = null; S.sheet = null; S.ready = false; render(); await boot(); toast(isSuper() ? '총 관리자 화면으로 바꿨어요' : '서버 관리자 화면으로 바꿨어요'); },
 };
 const FORMS = {
   auth(){
     const email = document.getElementById('auth-email').value.trim(), pw = document.getElementById('auth-pw').value;
-    S.pendingCode = (document.getElementById('auth-code')?.value || '').trim() || null; S.codeMsg = null;
+    const code = (document.getElementById('auth-code')?.value || '').trim();
     const signup = S.authMode === 'signup';
-    S.authMsg = null;
+    S.authMsg = null; S.codeMsg = null; S.pendingCode = null;
     guard(async () => {
       try{
-        const data = signup ? await API.signUp(email, pw) : await API.signIn(email, pw);
-        if(data?.session){ S.session = data.session; S.ready = false; render(); await boot(); }
-        else if(signup) S.authMsg = {ok:true, text:'확인 메일을 보냈어요. 메일의 링크를 누른 뒤 여기서 로그인해 주세요.'};
+        if(signup){
+          if(!code){ S.authMsg = {text:'서버 입장 코드를 입력해 주세요.'}; return; }
+          if(!(await API.checkCode(code))){ S.authMsg = {text:errMsg({message:'BAD_CODE'})}; return; }
+        }
+        const data = signup ? await API.signUp(email, pw, code) : await API.signIn(email, pw);
+        if(data?.session){ S.draft.auth = null; S.session = data.session; S.groupId = null; S.ready = false; render(); await boot(); }
+        else if(signup){ S.draft.auth.pw = ''; S.draft.auth.code = ''; S.authMode = 'login'; S.authMsg = {ok:true, text:`${email}로 확인 메일을 보냈어요. 메일의 「가입 확인」 링크를 누르면 바로 로그인돼요. 메일이 안 보이면 스팸함도 확인해 주세요.`}; }
       }catch(e){ S.authMsg = {text:errMsg(e)}; }
     });
   },

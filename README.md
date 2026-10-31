@@ -4,8 +4,7 @@
 
 - 이메일 + 비밀번호 로그인, 언제든 바꿀 수 있는 별명
 - **서버**
-  - 로그인할 때 입장 코드를 넣어 그 서버로 들어가요.
-  - 다른 서버로 가려면 로그아웃한 뒤 다른 코드로 다시 로그인해요.
+  - 회원가입할 때 입장 코드를 넣으면 그 서버로 들어가요. 로그인할 때는 코드가 필요 없어요.
   - 멤버와 서버 관리자에게는 서버 목록이나 다른 서버가 보이지 않아요. 서버에서도 목록을 보내지 않아요.
   - 서버를 바꾸는 메뉴와 「내 서버」 설정은 총 관리자에게만 있어요.
   - 기도제목, 응답 보관함, 함께 읽는 사람들은 서버마다 따로 보여요.
@@ -61,11 +60,14 @@
 1. GitHub 저장소에 `index.html`, `logo-light.png`, `logo-dark.png`를 올려요.
 2. **Settings → Pages**에서 main 브랜치로 배포해요.
 
-### 4. 로그인 메일 설정
+### 4. 가입 확인 메일 설정
 1. Supabase **Authentication → URL Configuration**에서 **Site URL**을 GitHub Pages 주소로 바꿔요. 가입 확인 메일의 링크가 이 주소로 돌아와요.
-2. 기본 설정에서는 가입할 때 확인 메일이 가요. Supabase 기본 메일 서버는 시간당 보낼 수 있는 양이 아주 적어요. 여러 명이 한꺼번에 가입한다면 둘 중 하나를 해 주세요.
-   - **Authentication**의 Email 설정에서 「Confirm email」을 끄기
-   - 직접 SMTP를 연결하기
+2. **Authentication → Sign In / Providers → Email**에서 「Confirm email」을 켜요.
+3. Supabase 기본 메일 서버는 프로젝트 팀원 주소로만 메일을 보내요. 다른 사람이 가입하려면 **직접 SMTP를 연결**해야 해요.
+   - Gmail로 보내기: Google 계정에서 2단계 인증을 켜고 「앱 비밀번호」를 만든 뒤, Supabase **Authentication → Emails → SMTP Settings**에 넣어요.
+     - Host `smtp.gmail.com`, Port `587`
+     - Username은 내 Gmail 주소, Password는 앱 비밀번호
+   - SMTP를 연결하면 **Authentication → Rate Limits**에서 시간당 메일 수를 늘릴 수 있어요.
 
 ### 5. 총 관리자 지정
 1. 앱에서 총 관리자가 될 이메일로 가입하고 별명을 정해요.

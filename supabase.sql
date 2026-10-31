@@ -498,3 +498,32 @@ alter function public.app_today() set search_path = public;
 revoke all on function public.check_prayer_mark() from public, anon, authenticated;
 revoke all on function public.check_reading() from public, anon, authenticated;
 revoke all on function public.handle_new_user() from public, anon, authenticated;
+
+-- ─── 회원가입 때 넣은 입장 코드로 바로 서버에 들어가기 ───
+create or replace function public.check_group_code(p_code text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from groups where code = upper(trim(p_code)))
+$$;
+revoke all on function public.check_group_code(text) from public;
+grant execute on function public.check_group_code(text) to anon, authenticated;
+
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id) values (new.id) on conflict do nothing;
+  if coalesce(new.raw_user_meta_data ->> 'join_code', '') <> '' then
+    insert into public.group_members (group_id, user_id)
+    select g.id, new.id from public.groups g where g.code = upper(trim(new.raw_user_meta_data ->> 'join_code'))
+    on conflict do nothing;
+  end if;
+  return new;
+end $$;
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+
+-- 로그인하면 마지막으로 들어간 서버가 열려요
+create or replace function public.my_last_group() returns uuid
+language sql stable security definer set search_path = public as $$
+  select group_id from group_members where user_id = auth.uid() order by joined_at desc limit 1
+$$;
+revoke all on function public.my_last_group() from public, anon;
+grant execute on function public.my_last_group() to authenticated;
