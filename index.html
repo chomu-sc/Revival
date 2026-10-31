@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1424" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,7 +39,21 @@
   --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
   --day:none; --night:block; --hero-ink:#F3EBD2; color-scheme:dark;
 }
-body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased;word-break:keep-all}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased;word-break:keep-all;zoom:var(--ui-zoom,1)}
+.theme-anim,.theme-anim *,.theme-anim *::before,.theme-anim *::after{transition:background-color .5s ease,color .5s ease,border-color .5s ease,box-shadow .5s ease!important}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.55s;animation-timing-function:ease}
+.celebrate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:var(--scrim);animation:cel-in .25s ease;cursor:pointer}
+.celebrate.out{opacity:0;transition:opacity .4s ease}
+.celebrate canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.celebrate-card{position:relative;background:var(--surface);color:var(--fg);border-radius:22px;padding:22px 26px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;max-width:min(320px,calc(100% - 48px));box-shadow:0 16px 40px var(--shadow);animation:cel-pop .45s cubic-bezier(.2,1.4,.4,1)}
+.celebrate-card small{font-size:12px;font-weight:700;color:var(--accent-ink);letter-spacing:.04em}
+.celebrate-card strong{font-size:22px;font-weight:800;line-height:1.35}
+.celebrate-card span{font-size:14px;color:var(--muted);line-height:1.6}
+@keyframes cel-in{from{opacity:0}to{opacity:1}}
+@keyframes cel-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.size-opt{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.size-sample{color:var(--muted)}
 #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
 button{font-family:inherit;cursor:pointer;color:inherit}
 button:disabled{cursor:default}
@@ -260,7 +274,7 @@ button.server-btn{cursor:pointer}
 .panel .member:first-of-type{border-top:none}
 .member .who{flex:1 1 160px}
 .readers svg{color:var(--accent)}
-@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 
 <div id="app"></div>
@@ -325,8 +339,10 @@ const S = {
   ready:false, fatal:'', session:null, profile:null, groups:[], groupId: lsGet('groupId') || null,
   prayers:[], readings:[], board:[], todayReaders:0,
   tab:'pray', page:null, adminGroupId:null, members:[], prayTab:'active', bibleView:'check', testament:null, bookId:null, sel:new Set(), ansScope:'all',
-  sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', draft:{}
+  sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', fontScale: lsGet('fontScale') || 'md', draft:{}
 };
+const FONT_SCALES = {sm:['작게',0.92], md:['보통',1], lg:['크게',1.12], xl:['아주 크게',1.25]};
+function applyFontScale(){ document.documentElement.style.setProperty('--ui-zoom', String((FONT_SCALES[S.fontScale] || FONT_SCALES.md)[1])); }
 const curGroup = () => S.groups.find(g => g.id === S.groupId) || null;
 const isSuper = () => !!S.profile?.is_super_admin;
 const canModerate = (g = curGroup()) => isSuper() || g?.my_role === 'admin';
@@ -776,7 +792,7 @@ function meHtml(){
     <section class="group"><h2>성경 통독</h2><div class="menu">${menuRow('page','통독 목표',planLabel(pr),'data-v="plan"')}</div></section>
     <section class="group"><h2>설정</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
-      ${menuRow('page','화면',{system:'시스템',light:'라이트',dark:'다크'}[S.theme],'data-v="theme"')}</div></section>
+      ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${(FONT_SCALES[S.fontScale]||FONT_SCALES.md)[0]}`,'data-v="theme"')}</div></section>
     ${adminSection ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
   </div>`;
@@ -826,8 +842,12 @@ function pagePrivacy(){
     </section></div>`;
 }
 function pageTheme(){
-  return subHead('화면') + `<div class="settings pad"><div class="menu">${['system','light','dark'].map(v =>
-    `<button class="menu-row" data-act="theme" data-v="${v}" aria-pressed="${S.theme===v}"><span>${THEME_NAME[v]}</span><span class="val" style="color:var(--accent)">${S.theme===v ? I.check(20) : ''}</span></button>`).join('')}</div></div>`;
+  return subHead('화면과 글자 크기') + `<div class="settings pad">
+    <section class="group"><h2>화면</h2><div class="menu">${['system','light','dark'].map(v =>
+      `<button class="menu-row" data-act="theme" data-v="${v}" aria-pressed="${S.theme===v}"><span>${THEME_NAME[v]}</span><span class="val" style="color:var(--accent)">${S.theme===v ? I.check(20) : ''}</span></button>`).join('')}</div></section>
+    <section class="group"><h2>글자 크기</h2><div class="menu">${Object.entries(FONT_SCALES).map(([k,[label,z]]) =>
+      `<button class="menu-row" data-act="fontScale" data-v="${k}" aria-pressed="${S.fontScale===k}"><span class="size-opt"><span style="font-size:${Math.round(15*z)}px">${label}</span><span class="size-sample" style="font-size:${Math.round(13*z)}px">가나다 123</span></span><span class="val" style="color:var(--accent)">${S.fontScale===k ? I.check(20) : ''}</span></button>`).join('')}</div>
+      <span class="hint" style="margin:0 4px">앱 전체의 글자와 버튼 크기가 함께 바뀌어요. 이 기기에만 저장돼요.</span></section></div>`;
 }
 function pageAdmin(){
   const list = isSuper() ? S.groups : S.groups.filter(g => g.my_role === 'admin');
@@ -1013,10 +1033,19 @@ async function boot(){
 }
 async function start(){
   if(S.theme !== 'system') applyTheme();
+  applyFontScale();
+  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(S.theme === 'system'){ const r = document.documentElement; r.classList.add('theme-anim'); setTimeout(() => r.classList.remove('theme-anim'), 650); } }); }catch(e){}
   render();
   try{ await API.init(); S.fatal = ''; }
   catch(e){ S.fatal = errMsg(e); S.ready = true; render(); return; }
   await boot();
+}
+function withThemeTransition(fn){
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce && document.startViewTransition){ try{ document.startViewTransition(fn); return; }catch(e){} }
+  const r = document.documentElement;
+  if(!reduce){ r.classList.add('theme-anim'); setTimeout(() => r.classList.remove('theme-anim'), 650); }
+  fn();
 }
 function applyTheme(){ const r = document.documentElement; if(S.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); }
 async function guard(fn){ if(S.busy) return; S.busy = true; try{ await fn(); }catch(e){ toast(errMsg(e)); }finally{ S.busy = false; render(); } }
@@ -1098,7 +1127,15 @@ const ACT = {
   },
   confirmRead(){
     const list = [...S.sel].map(k => { const [book,chapter] = k.split('-').map(Number); return {book, chapter}; });
-    guard(async () => { await API.addReadings(list); const n = list.length; S.sel.clear(); S.readings = await API.loadReadings(); await loadGroupData(); toast(`${md(appToday())}, ${n}장 등록했어요`); });
+    guard(async () => {
+      const before = completedBooks(), beforeDone = computeProgress(S.profile, S.readings).remaining <= 0;
+      await API.addReadings(list); const n = list.length; S.sel.clear(); S.readings = await API.loadReadings(); await loadGroupData();
+      const fresh = completedBooks().filter(id => !before.includes(id));
+      const allDone = !beforeDone && computeProgress(S.profile, S.readings).remaining <= 0;
+      if(allDone) celebrate('통독 목표 달성', `${planLabel(computeProgress(S.profile, S.readings))}`, '목표한 성경을 모두 읽었어요. 정말 수고 많았어요!');
+      else if(fresh.length) celebrate('한 권 완독', `${fresh.map(id => BOOK[id].name).join(' · ')}`, fresh.length === 1 ? `${BOOK[fresh[0]].name} ${BOOK[fresh[0]].c}장을 모두 읽었어요` : `${fresh.length}권을 모두 읽었어요`);
+      else toast(`${md(appToday())}, ${n}장 등록했어요`);
+    });
   },
   ansScope(d){ S.ansScope = d.v; render(); },
   page(d){
@@ -1140,7 +1177,8 @@ const ACT = {
   },
   prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
   prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
-  theme(d){ S.theme = d.v; lsSet('theme', d.v); applyTheme(); render(); },
+  theme(d){ withThemeTransition(() => { S.theme = d.v; lsSet('theme', d.v); applyTheme(); render(); }); },
+  fontScale(d){ S.fontScale = d.v; lsSet('fontScale', d.v); applyFontScale(); render(); },
   authMode(d){ S.authMode = d.v; S.authMsg = null; render(); },
   signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; S.authMode = 'login'; S.draft.auth = null; }); },
   async demoRole(){ if(!IS_DEMO) return; await API.setSuper(!isSuper()); S.page = null; S.sheet = null; S.ready = false; render(); await boot(); toast(isSuper() ? '총 관리자 화면으로 바꿨어요' : '서버 관리자 화면으로 바꿨어요'); },
@@ -1212,6 +1250,48 @@ document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.da
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
 setInterval(() => { const a = document.activeElement; if(S.ready && S.session && S.tab === 'pray' && !S.sheet && !(a && /INPUT|TEXTAREA/.test(a.tagName))) render(); }, 30000);
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.session && S.profile && !S.sheet) loadGroupData().then(render).catch(()=>{}); });
+
+/* ─── 완독 축하 ─── */
+function completedBooks(){
+  const pr = computeProgress(S.profile, S.readings);
+  return BOOKS.filter(b => (pr.scope === 'ALL' || b.t === pr.scope) && Array.from({length:b.c}, (_,i) => pr.counts.get(b.id+'-'+(i+1)) || 0).every(c => c >= pr.times)).map(b => b.id);
+}
+function celebrate(eyebrow, title, sub){
+  document.querySelector('.celebrate')?.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'celebrate'; wrap.setAttribute('role','status');
+  wrap.innerHTML = `<canvas aria-hidden="true"></canvas><div class="celebrate-card"><small>${esc(eyebrow)}</small><strong>${esc(title)}</strong><span>${esc(sub)}</span></div>`;
+  document.body.appendChild(wrap);
+  const close = () => { if(!wrap.isConnected) return; wrap.classList.add('out'); setTimeout(() => wrap.remove(), 400); };
+  wrap.addEventListener('click', close);
+  setTimeout(close, 4200);
+  try{ navigator.vibrate?.([30,60,30]); }catch(e){}
+  if(!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) fireworks(wrap.querySelector('canvas'));
+}
+function fireworks(cv){
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr;
+  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const colors = ['#FFB648','#6EAAFF','#E2621B','#8DBF73','#F3EBD2','#FF7AA8','#2F5BD3'];
+  const parts = [], rockets = [];
+  const launch = () => rockets.push({x: W*(0.15 + Math.random()*0.7), y: H, vy: -(H*0.012 + Math.random()*H*0.006), ty: H*(0.15 + Math.random()*0.35), c: colors[Math.floor(Math.random()*colors.length)]});
+  const burst = (x,y,c) => { const n = 70; for(let i=0;i<n;i++){ const a = Math.PI*2*i/n + Math.random()*0.2, sp = 1.5 + Math.random()*3.2; parts.push({x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 1, c: Math.random() < 0.25 ? '#FFFFFF' : c}); } };
+  [0,250,600,900,1300,1650,2000,2400].forEach(t => setTimeout(launch, t));
+  const t0 = performance.now();
+  (function frame(now){
+    if(!cv.isConnected) return;
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'lighter';
+    for(let i=rockets.length-1;i>=0;i--){ const r = rockets[i]; r.y += r.vy; ctx.fillStyle = r.c; ctx.beginPath(); ctx.arc(r.x, r.y, 2.4, 0, 7); ctx.fill(); if(r.y <= r.ty){ burst(r.x, r.y, r.c); rockets.splice(i,1); } }
+    for(let i=parts.length-1;i>=0;i--){ const p = parts[i]; p.vx *= 0.985; p.vy = p.vy*0.985 + 0.045; p.x += p.vx; p.y += p.vy; p.life -= 0.012; if(p.life <= 0){ parts.splice(i,1); continue; } ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    if(now - t0 < 4200 || parts.length || rockets.length) requestAnimationFrame(frame);
+  })(t0);
+}
+
+/* ─── 확대 막기 (iOS 핀치) ─── */
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
 
 /* ─── 성경 장 드래그 선택 ─── */
 let drag = null, press = null, suppressClickUntil = 0;
