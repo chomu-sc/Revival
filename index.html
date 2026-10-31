@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1424" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="logo-light.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>누군가 널 위해 기도하네</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: one phone-width column (max 480px). Sunrise/night hill hero on the prayer tab, fixed bottom nav, bottom sheets for writing. */
+:root{
+  --bg:#F7F8FB; --surface:#FFFFFF; --line:#E6E8EF; --fg:#1A1A1A; --muted:#4A4F5C; --faint:#6B7080;
+  --chip-line:#D6D9E2; --soft:#F3F4F7; --accent:#2F5BD3; --accent-ink:#1E3F9E; --accent-tint:#E8EDFB;
+  --on-accent:#FFFFFF; --strong:#1A1A1A; --on-strong:#FFFFFF; --warn:#B4461B; --warn-tint:#FCEBE3;
+  --bar:#9DB6EE; --target:#D2561A; --scrim:rgba(15,20,35,.45); --shadow:rgba(26,26,26,.18);
+  --o-bg:#E8EDFB; --o-fg:#1E3F9E; --x-bg:#EEEFF3; --x-fg:#3F4452; --w-bg:#DFF0F5; --w-fg:#14596B; --h-bg:#FCEBDD; --h-fg:#8A3D0B;
+  --day:block; --night:none; --hero-ink:#2A2620;
+  --font:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1424; --surface:#18203A; --line:#26304D; --fg:#E9ECF5; --muted:#B4BBCD; --faint:#9AA3BB;
+  --chip-line:#34405E; --soft:#1F2844; --accent:#6EAAFF; --accent-ink:#9CC2FF; --accent-tint:#1E2E55;
+  --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
+  --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
+  --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
+  --day:none; --night:block; --hero-ink:#F3EBD2; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1424; --surface:#18203A; --line:#26304D; --fg:#E9ECF5; --muted:#B4BBCD; --faint:#9AA3BB;
+  --chip-line:#34405E; --soft:#1F2844; --accent:#6EAAFF; --accent-ink:#9CC2FF; --accent-tint:#1E2E55;
+  --on-accent:#0E1424; --strong:#E9ECF5; --on-strong:#0E1424; --warn:#FFB08A; --warn-tint:#3A2418;
+  --bar:#3D5E9C; --target:#FFB08A; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
+  --o-bg:#1E2E55; --o-fg:#9CC2FF; --x-bg:#26304D; --x-fg:#C9CFDD; --w-bg:#14353F; --w-fg:#8FD3E6; --h-bg:#3A2418; --h-fg:#FFB08A;
+  --day:none; --night:block; --hero-ink:#F3EBD2; color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased;word-break:keep-all}
+#app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+button{font-family:inherit;cursor:pointer;color:inherit}
+button:disabled{cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+/* hero */
+.hero{position:relative;height:224px;overflow:hidden}
+.hero.tall{height:280px}
+.hero svg.scene{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scene-day,.logo-day{display:var(--day)!important}
+.scene-night,.logo-night{display:var(--night)!important}
+.hero h1{position:absolute;left:0;right:0;top:96px;margin:0;display:flex;justify-content:center}
+.hero.tall h1{top:112px}
+.hero h1 img{width:min(300px,78%);height:auto}
+.hero .hero-btn{position:absolute;top:12px;right:max(8px,env(safe-area-inset-right,0px));color:var(--hero-ink)}
+.hero .hero-btn:hover{background:transparent}
+
+/* common */
+.topbar{padding-block:28px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.topbar h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.icon-btn{width:44px;height:44px;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;color:var(--fg);flex-shrink:0}
+.icon-btn:hover{background:var(--soft)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--chip-line);background:var(--surface);color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--strong);border-color:var(--strong);color:var(--on-strong);font-weight:700}
+.filterbar{background:var(--surface);border-bottom:1px solid var(--line)}
+.list{display:flex;flex-direction:column;gap:12px;padding-block:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.who{display:flex;align-items:center;gap:8px;min-width:0}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-tint);color:var(--accent);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar.anon{background:var(--soft);color:var(--faint)}
+.name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.time{font-size:12px;color:var(--faint);white-space:nowrap}
+.pill{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--accent-tint);color:var(--accent-ink);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.pill.warn{background:var(--warn-tint);color:var(--warn)}
+.pill.muted{background:var(--soft);color:var(--faint)}
+.ans-O{background:var(--o-bg);color:var(--o-fg)} .ans-X{background:var(--x-bg);color:var(--x-fg)}
+.ans-WAIT{background:var(--w-bg);color:var(--w-fg)} .ans-HISWAY{background:var(--h-bg);color:var(--h-fg)}
+.content{margin:0;font-size:15px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.comment{margin:0;padding:12px 14px;border-radius:12px;background:var(--soft);font-size:14px;line-height:1.6;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--muted)} .count b{color:var(--fg)}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:none;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn-accent{background:var(--accent);color:var(--on-accent)}
+.btn-wait{background:var(--soft);color:var(--muted);border:1px solid var(--chip-line);font-weight:500}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--chip-line);font-weight:500}
+.btn-strong{background:var(--strong);color:var(--on-strong)}
+.btn-danger{background:var(--warn);color:var(--surface)}
+.btn-block{width:100%;min-height:52px;font-size:16px;border-radius:14px}
+.btn-sm{min-height:40px;padding:0 12px;font-size:13px}
+.empty{padding:40px 16px;text-align:center;color:var(--faint);font-size:14px;line-height:1.7}
+.fab{position:fixed;z-index:20;right:max(20px,calc(50vw - 220px));bottom:calc(100px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px;border-radius:26px;border:none;background:var(--strong);color:var(--on-strong);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px var(--shadow)}
+.nav{position:fixed;z-index:30;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;box-sizing:border-box;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:6px max(8px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--faint);min-height:52px}
+.nav button.on{color:var(--accent);font-weight:700}
+.demo{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-block:6px;background:var(--accent-tint);color:var(--accent-ink);font-size:12px}
+.demo button{background:none;border:none;color:var(--accent-ink);font-size:12px;font-weight:700;text-decoration:underline;min-height:32px}
+.toast{position:fixed;z-index:70;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));background:var(--strong);color:var(--on-strong);padding:12px 18px;border-radius:12px;font-size:14px;font-weight:500;width:max-content;max-width:calc(100% - 32px);box-shadow:0 8px 24px var(--shadow);text-align:center;line-height:1.5}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:var(--surface);border-radius:24px 24px 0 0;padding-top:10px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:20px;box-sizing:border-box;cursor:auto}
+.grabber{align-self:center;width:40px;height:4px;border-radius:2px;background:var(--chip-line)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheet-head h2{margin:0;font-size:20px;font-weight:800}
+.field{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:none;min-width:0}
+.label{font-size:13px;font-weight:700;color:var(--muted);padding:0}
+.hint{font-size:12px;color:var(--faint);line-height:1.5}
+textarea,input[type=text],input[type=email],input[type=password],input[type=date]{width:100%;box-sizing:border-box;border:1.5px solid var(--chip-line);background:var(--bg);color:var(--fg);border-radius:14px;padding:12px 14px;font:inherit;font-size:16px;min-height:48px}
+textarea{min-height:140px;resize:vertical;line-height:1.6}
+textarea:focus,input:focus{border-color:var(--accent);outline:none}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.choice{min-height:64px;border-radius:14px;border:1.5px solid var(--chip-line);background:var(--surface);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:8px 14px;text-align:left}
+.choice strong{font-size:16px;color:var(--fg)}
+.choice small{font-size:12px;color:var(--faint);font-weight:500}
+.choice.on{border:2px solid var(--accent);background:var(--accent-tint)}
+.choice.on small{color:var(--accent-ink)}
+.choice.wide{grid-column:1/-1;min-height:48px;flex-direction:row;align-items:center;gap:8px}
+.note{padding:12px 14px;border-radius:12px;background:var(--accent-tint);color:var(--fg);font-size:14px;display:flex;gap:8px;align-items:center}
+.note svg{color:var(--accent);flex-shrink:0}
+.switchrow{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px;cursor:pointer}
+.switchrow span{display:flex;flex-direction:column;gap:2px}
+.switchrow b{font-size:15px;font-weight:500}
+.switchrow small{font-size:12px;color:var(--faint)}
+.sw{appearance:none;-webkit-appearance:none;width:52px;height:32px;border-radius:16px;background:var(--chip-line);position:relative;flex-shrink:0;cursor:pointer;margin:0;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.sw:checked{background:var(--accent)}
+.sw:checked::after{transform:translateX(20px)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+
+/* bible */
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px;gap:4px;border-radius:12px;background:var(--soft)}
+.seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg button{min-height:40px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-size:14px;font-weight:500}
+.seg button.on{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 3px var(--shadow)}
+.bible-head{padding-block:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.goal-row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.eyebrow{font-size:12px;font-weight:700;color:var(--faint);letter-spacing:.02em}
+.big{margin:0;font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.bar{height:8px;border-radius:4px;background:var(--accent-tint);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.readers{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.readers b{color:var(--accent-ink)}
+.stack{display:flex}
+.stack span{width:24px;height:24px;border-radius:50%;border:2px solid var(--surface);margin-left:-8px;background:var(--accent-tint);color:var(--accent-ink);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.stack span:first-child{margin-left:0}
+.book-title{display:flex;justify-content:space-between;align-items:baseline;padding-block:4px 10px}
+.book-title h2{margin:0;font-size:18px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding-bottom:190px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ch{height:44px;border-radius:10px;border:1.5px solid var(--chip-line);background:var(--surface);color:var(--fg);font-size:14px;font-weight:500;position:relative;padding:0}
+.ch.done{background:var(--strong);border-color:var(--strong);color:var(--on-strong);font-weight:700}
+.ch.sel{background:var(--accent-tint);border:2px solid var(--accent);color:var(--accent-ink);font-weight:800}
+.ch.del{background:var(--warn-tint);border:2px solid var(--warn);color:var(--warn);font-weight:800;text-decoration:line-through}
+.ch:disabled{opacity:.35;cursor:default}
+.book-title{flex-wrap:wrap;gap:8px}
+.ch sup{position:absolute;top:3px;right:4px;font-size:9px;line-height:1}
+.confirm{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(min(480px,100%) - 24px);box-sizing:border-box;background:var(--strong);color:var(--on-strong);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px var(--shadow)}
+.confirm small{font-size:12px;opacity:.75;line-height:1.5}
+.confirm strong{font-size:17px}
+.confirm .btn-ghost{color:var(--on-strong);border-color:currentColor;opacity:.85}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.panel h2{margin:0;font-size:16px;font-weight:800}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panels{display:flex;flex-direction:column;gap:12px;padding-block:12px}
+.ring{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ring>div{width:92px;height:92px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring b{font-size:23px;font-weight:800;line-height:1}
+.ring small{font-size:11px;color:var(--faint);margin-top:4px}
+.goal{display:flex;align-items:center;gap:20px}
+.goal-text{display:flex;flex-direction:column;gap:10px;min-width:0}
+.goal-text .per{font-size:28px;font-weight:800;color:var(--accent-ink);line-height:1.2}
+.goal-text p{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
+.chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:end;height:130px;border-bottom:1px solid var(--line);position:relative}
+.chart .col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.chart .col span{font-size:11px;color:var(--faint)}
+.chart .col i{display:block;width:100%;border-radius:6px 6px 0 0;background:var(--bar);min-height:3px}
+.chart .col.today i{background:var(--accent)}
+.chart .col.today span{color:var(--accent-ink);font-weight:800}
+.chart .target{position:absolute;left:0;right:0;border-top:1.5px dashed var(--target);pointer-events:none}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:-8px;font-size:12px;color:var(--faint);text-align:center}
+.days .today{color:var(--accent-ink);font-weight:800}
+.legend{font-size:12px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.legend i{width:16px;border-top:1.5px dashed var(--target);display:inline-block}
+.board{display:flex;flex-direction:column;gap:10px}
+.board div{display:grid;grid-template-columns:90px minmax(0,1fr) 52px;align-items:center;gap:10px;font-size:13px}
+.board .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.board .nm em{font-style:normal;width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.board .me .nm,.board .me .pc{color:var(--accent-ink);font-weight:800}
+.board .pc{text-align:right;color:var(--muted)}
+.board .bar{height:8px}
+.board .bar i{background:var(--bar)}
+.board .me .bar i{background:var(--accent)}
+
+/* answers & me */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{padding:12px 10px;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.tile small{font-size:12px;font-weight:700;color:var(--faint)}
+.tile b{font-size:20px;font-weight:800}
+.ans-head{display:flex;flex-direction:column;gap:14px;padding-block:24px 4px}
+.ans-head h1{margin:0;font-size:24px;font-weight:800;line-height:1.35}
+.settings{display:flex;flex-direction:column;gap:18px;padding-block:8px 24px}
+.group{display:flex;flex-direction:column;gap:8px}
+.group>h2{margin:0 4px;font-size:13px;font-weight:700;color:var(--faint)}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper b{min-width:48px;text-align:center;font-size:18px;font-weight:800}
+.stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--chip-line);background:var(--surface);font-size:20px}
+.calc{padding:12px 14px;border-radius:12px;background:var(--soft);font-size:13px;line-height:1.5;color:var(--muted)}
+.calc b{color:var(--fg)}
+.between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.auth{display:flex;flex-direction:column;gap:16px;padding-block:20px 40px}
+.auth form{display:flex;flex-direction:column;gap:14px}
+.msg{font-size:14px;line-height:1.6;padding:12px 14px;border-radius:12px;background:var(--warn-tint);color:var(--warn)}
+.msg.ok{background:var(--accent-tint);color:var(--accent-ink)}
+.lead{margin:0;font-size:15px;line-height:1.7;color:var(--muted)}
+/* servers, menus, calendar */
+.server-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:8px}
+.server-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;border:none;background:none;font-size:16px;font-weight:800;color:var(--fg);padding:0;min-width:0}
+.server-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.server-btn{cursor:pointer}
+.server-btn svg:first-child{color:var(--accent)}
+.foot-actions{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn.mod{color:var(--warn);border-color:var(--warn-tint)}
+.menu{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.menu-row{width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:8px 16px;border:none;border-top:1px solid var(--line);background:none;text-align:left;font-size:15px;color:var(--fg)}
+.menu-row:first-child{border-top:none}
+.menu-row>span:first-child{display:flex;align-items:center;gap:6px;flex-direction:row;flex-wrap:wrap}
+.menu-row .val{display:flex;align-items:center;gap:4px;color:var(--faint);font-size:14px;min-width:0;text-align:right;flex-shrink:1}
+.menu-row:hover{background:var(--soft)}
+.back{display:inline-flex;align-items:center;gap:2px;min-height:44px;border:none;background:none;color:var(--accent-ink);font-size:15px;font-weight:700;padding:0;margin-left:-6px;align-self:flex-start}
+.subhead{padding-block:12px 4px;display:flex;flex-direction:column;gap:2px}
+.subhead h1{margin:0;font-size:22px;font-weight:800}
+.cal{border:1px solid var(--line);border-radius:16px;padding:8px 10px 10px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.cal-head{display:flex;justify-content:space-between;align-items:center}
+.cal-head b{font-size:15px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;text-align:center}
+.cal-grid .wd{font-size:11px;color:var(--faint);padding:4px 0}
+.cal-grid .wd.sun{color:var(--warn)}
+.cal-day{height:40px;border:none;background:none;border-radius:10px;font-size:14px;color:var(--fg);padding:0}
+.cal-day:hover:not(:disabled){background:var(--soft)}
+.cal-day:disabled{color:var(--chip-line)}
+.cal-day.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cal-day.sel,.cal-day.sel:hover:not(:disabled){background:var(--accent);color:var(--on-accent);font-weight:800}
+.date-btn{min-height:48px;border-radius:14px;border:1.5px solid var(--chip-line);background:var(--bg);color:var(--fg);font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px}
+.date-btn svg{color:var(--faint)}
+.date-btn.on{border-color:var(--accent);color:var(--accent-ink)}
+.code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:22px;font-weight:700;letter-spacing:.15em;user-select:all}
+.code-sm{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.08em}
+.code-input{text-transform:uppercase;letter-spacing:.12em;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+.member{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-height:56px;border-top:1px solid var(--line);padding-block:8px}
+.panel .member:first-of-type{border-top:none}
+.member .who{flex:1 1 160px}
+.readers svg{color:var(--accent)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div id="app"></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+/* ─── 설정: Supabase 프로젝트의 URL과 anon key를 넣으면 실제 서버로 동작해요. 비워 두면 체험 모드예요. ─── */
+const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
+const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
+
+/* ─── 성경 ─── */
+const OT = [['창세기',50],['출애굽기',40],['레위기',27],['민수기',36],['신명기',34],['여호수아',24],['사사기',21],['룻기',4],['사무엘상',31],['사무엘하',24],['열왕기상',22],['열왕기하',25],['역대상',29],['역대하',36],['에스라',10],['느헤미야',13],['에스더',10],['욥기',42],['시편',150],['잠언',31],['전도서',12],['아가',8],['이사야',66],['예레미야',52],['예레미야애가',5],['에스겔',48],['다니엘',12],['호세아',14],['요엘',3],['아모스',9],['오바댜',1],['요나',4],['미가',7],['나훔',3],['하박국',3],['스바냐',3],['학개',2],['스가랴',14],['말라기',4]];
+const NT = [['마태복음',28],['마가복음',16],['누가복음',24],['요한복음',21],['사도행전',28],['로마서',16],['고린도전서',16],['고린도후서',13],['갈라디아서',6],['에베소서',6],['빌립보서',4],['골로새서',4],['데살로니가전서',5],['데살로니가후서',3],['디모데전서',6],['디모데후서',4],['디도서',3],['빌레몬서',1],['히브리서',13],['야고보서',5],['베드로전서',5],['베드로후서',3],['요한일서',5],['요한이서',1],['요한삼서',1],['유다서',1],['요한계시록',22]];
+const BOOKS = [...OT.map((b,i)=>({id:i+1,name:b[0],c:b[1],t:'OT'})), ...NT.map((b,i)=>({id:40+i,name:b[0],c:b[1],t:'NT'}))];
+const BOOK = Object.fromEntries(BOOKS.map(b=>[b.id,b]));
+const SCOPE_NAME = {OT:'구약', NT:'신약', ALL:'신구약'};
+const ANSWERS = {O:['O','구한 대로 응답'], X:['X','허락되지 않음'], WAIT:['Wait','기다리라 하심'], HISWAY:['His Way','다른 길로 인도하심']};
+const ARCHIVED = ['O','X','WAIT','HISWAY'];
+const HOUR = 3600e3, DAY = 86400e3;
+const WD = ['일','월','화','수','목','금','토'];
+const THEME_NAME = {system:'시스템 설정 따르기', light:'라이트 (해 뜬 동산)', dark:'다크 (밤의 동산)'};
+
+/* ─── 날짜: 하루는 한국 시간 새벽 3시에 바뀌어요 ─── */
+const appToday = (t=Date.now()) => new Date(t + 6*HOUR).toISOString().slice(0,10);
+const kstDate = ts => new Date(new Date(ts).getTime() + 9*HOUR).toISOString().slice(0,10);
+const addDays = (ds,n) => { const d = new Date(ds+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const daysBetween = (a,b) => Math.round((Date.parse(b+'T00:00:00Z') - Date.parse(a+'T00:00:00Z'))/DAY);
+const weekday = ds => WD[new Date(ds+'T00:00:00Z').getUTCDay()];
+const md = ds => { const [,m,d] = ds.split('-').map(Number); return `${m}월 ${d}일`; };
+const ymd = ds => { const [y,m,d] = ds.split('-').map(Number); return `${y}. ${m}. ${d}`; };
+const pad2 = n => String(n).padStart(2,'0');
+const floor1 = n => (Math.floor(n*10+1e-9)/10).toFixed(1);
+const ceil1 = n => (Math.ceil(n*10-1e-9)/10).toFixed(1);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rel(ts){ const m = Math.floor((Date.now()-new Date(ts))/60000); if(m<1) return '방금'; if(m<60) return m+'분 전'; const h = Math.floor(m/60); if(h<24) return h+'시간 전'; const d = Math.floor(h/24); return d<30 ? d+'일 전' : md(kstDate(ts)); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+/* ─── 통독 진행 계산 ─── */
+function computeProgress(profile, readings){
+  const start = profile.plan_start, end = profile.plan_end, times = profile.plan_times || 1, scope = profile.plan_scope || 'ALL';
+  const counts = new Map(); const today = appToday(); let todayCount = 0;
+  for(const r of readings){
+    if(r.read_on === today) todayCount++;
+    if(r.read_on >= start && r.read_on <= end){ const k = r.book+'-'+r.chapter; counts.set(k, (counts.get(k)||0)+1); }
+  }
+  let done = 0, total = 0;
+  for(const b of BOOKS){
+    if(scope !== 'ALL' && b.t !== scope) continue;
+    total += b.c*times;
+    for(let c=1;c<=b.c;c++) done += Math.min(counts.get(b.id+'-'+c)||0, times);
+  }
+  let daysLeft;
+  if(today > end) daysLeft = 0; else if(today < start) daysLeft = daysBetween(start,end)+1; else daysLeft = daysBetween(today,end)+1;
+  const remaining = total - done;
+  return {counts, done, total, remaining, pct: total ? done/total*100 : 0, daysLeft, perDay: daysLeft>0 ? remaining/daysLeft : 0, todayCount, start, end, times, scope};
+}
+
+/* ─── 상태 ─── */
+const S = {
+  ready:false, fatal:'', session:null, profile:null, groups:[], groupId: lsGet('groupId') || null,
+  prayers:[], readings:[], board:[], todayReaders:0,
+  tab:'pray', page:null, adminGroupId:null, members:[], prayTab:'active', bibleView:'check', testament:null, bookId:null, sel:new Set(), ansScope:'all',
+  sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', draft:{}
+};
+const curGroup = () => S.groups.find(g => g.id === S.groupId) || null;
+const isSuper = () => !!S.profile?.is_super_admin;
+const canModerate = (g = curGroup()) => isSuper() || g?.my_role === 'admin';
+
+/* ─── 서버 (Supabase) ─── */
+function loadScript(src){ return new Promise((ok,fail)=>{ const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fail(new Error('Failed to fetch')); document.head.appendChild(s); }); }
+function supabaseApi(){
+  let sb; const uid = () => S.session?.user?.id;
+  const chk = ({data,error}) => { if(error) throw error; return data; };
+  const rpc = (fn, args) => sb.rpc(fn, args).then(chk);
+  return {
+    async init(){
+      await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js');
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const {data} = await sb.auth.getSession();
+      S.session = data.session;
+      sb.auth.onAuthStateChange((ev, session) => {
+        const changed = (session?.user?.id || null) !== (S.session?.user?.id || null);
+        S.session = session;
+        if(changed) boot();
+      });
+    },
+    signIn: (email,password) => sb.auth.signInWithPassword({email,password}).then(chk),
+    signUp: (email,password) => sb.auth.signUp({email,password,options:{emailRedirectTo: location.origin + location.pathname}}).then(chk),
+    signOut: () => sb.auth.signOut(),
+    loadProfile: () => sb.from('profiles').select('*').eq('id',uid()).single().then(chk),
+    updateProfile: p => sb.from('profiles').update(p).eq('id',uid()).select().single().then(chk),
+    loadGroups: () => rpc('my_groups'),
+    groupInfo: g => rpc('group_info', {p_group:g}).then(r => (r && r[0]) || null),
+    joinGroup: code => rpc('join_group', {p_code:code}),
+    leaveGroup: g => rpc('leave_group', {p_group:g}),
+    createGroup: name => rpc('create_group', {p_name:name}),
+    renameGroup: (g,name) => rpc('rename_group', {p_group:g, p_name:name}),
+    deleteGroup: g => rpc('delete_group', {p_group:g}),
+    setRole: (g,u,role) => rpc('set_member_role', {p_group:g, p_user:u, p_role:role}),
+    listMembers: g => rpc('group_members_list', {p_group:g}),
+    removeMember: (g,u) => rpc('remove_member', {p_group:g, p_user:u}),
+    regenCode: g => rpc('regenerate_group_code', {p_group:g}),
+    loadPrayers: g => rpc('get_prayers', {p_group:g}),
+    createPrayer: o => sb.from('prayers').insert(o).then(chk),
+    markPrayer: id => sb.from('prayer_marks').insert({prayer_id:id}).then(chk),
+    answerPrayer: (id,o) => sb.from('prayers').update({...o, answered_at: o.answer ? new Date().toISOString() : null}).eq('id',id).then(chk),
+    setAnswerPublic: (id,v) => sb.from('prayers').update({answer_public:v}).eq('id',id).then(chk),
+    deletePrayer: id => sb.from('prayers').delete().eq('id',id).then(chk),
+    modDelete: id => rpc('mod_delete_prayer', {p_prayer:id}),
+    async loadReadings(){
+      const all = [];
+      for(let from=0;;from+=1000){
+        const d = chk(await sb.from('readings').select('id,book,chapter,read_on').eq('user_id',uid()).order('id').range(from, from+999));
+        all.push(...d); if(d.length < 1000) break;
+      }
+      return all;
+    },
+    addReadings: list => sb.from('readings').insert(list).then(chk),
+    deleteReadings: ids => sb.from('readings').delete().in('id', ids).then(chk),
+    loadBoard: g => rpc('reading_board', {p_group:g}),
+    todayReaders: g => rpc('group_today_readers', {p_group:g}),
+  };
+}
+
+/* ─── 체험 모드 (이 브라우저에만 저장) ─── */
+function demoApi(){
+  const KEY = 'pray-demo-v2'; let db = null;
+  const save = () => lsSet(KEY, JSON.stringify(db));
+  const ME = 'me';
+  function code(){ const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c; do{ c = Array.from({length:6}, () => a[Math.floor(Math.random()*a.length)]).join(''); }while(db && db.groups.some(g => g.code === c)); return c; }
+  function seed(){
+    const now = Date.now(), iso = t => new Date(t).toISOString(), today = appToday(), y = today.slice(0,4);
+    const profile = {id:ME, email:'demo@example.com', nickname:'은혜로운양', plan_start:`${y}-01-01`, plan_end:`${y}-12-31`, plan_scope:'ALL', plan_times:1, prayer_anon_default:false, answer_public_default:true, is_super_admin:true};
+    const order = []; BOOKS.forEach(b => { for(let c=1;c<=b.c;c++) order.push([b.id,c]); });
+    const week = [4,6,0,8,5,7,3];
+    const span = Math.max(1, daysBetween(profile.plan_start, addDays(today,-7)));
+    const earlier = Math.max(0, Math.min(780, Math.round(span*2.6)));
+    const readings = []; let i = 0;
+    for(; i<earlier; i++) readings.push({id:i+1, book:order[i][0], chapter:order[i][1], read_on: addDays(profile.plan_start, Math.floor(i/earlier*span))});
+    week.forEach((n,k) => { const d = addDays(today, k-6); if(d < profile.plan_start) return; for(let j=0;j<n && i<order.length;j++,i++) readings.push({id:i+1, book:order[i][0], chapter:order[i][1], read_on:d}); });
+    const users = {u1:{nickname:'새벽이슬',pct:82.4,today:true}, u2:{nickname:'들꽃',pct:55.1,today:true}, u3:{nickname:'요셉의꿈',pct:41.7,today:false}, u4:{nickname:'소망나무',pct:23.5,today:true}, u5:{nickname:'빛과소금',pct:12.0,today:false}};
+    const groups = [{id:'g1', name:'청년부', code:'GRACE7'}, {id:'g2', name:'새벽기도 모임', code:'DAWN24'}, {id:'g3', name:'목장 모임', code:'HOPE38'}];
+    const M = (group_id,user_id,role='member') => ({group_id,user_id,role,joined_at:iso(now-30*DAY)});
+    const members = [M('g1',ME,'admin'),M('g1','u1'),M('g1','u2'),M('g1','u3','admin'),M('g1','u4'), M('g2',ME),M('g2','u1'),M('g2','u5','admin'), M('g3','u2'),M('g3','u5','admin')];
+    const P = o => Object.assign({group_id:'g1', answer:null, answer_comment:null, answered_at:null, answer_public:true, is_anonymous:false, user_id:null}, o);
+    const prayers = [
+      P({id:1, user_id:'u1', content:'청년부 수련회 준비팀이 한마음으로 섬길 수 있도록 기도해 주세요.', created_at:iso(now-6*DAY-19*HOUR), ends_at:iso(now+5*HOUR), base:41}),
+      P({id:2, user_id:'u4', is_anonymous:true, content:'이직을 고민 중이에요. 내 뜻이 아니라 하나님의 뜻을 분별할 수 있는 지혜를 구합니다.', created_at:iso(now-5*HOUR), ends_at:iso(now+7*DAY-5*HOUR), base:8}),
+      P({id:3, user_id:'u2', content:'다음 주 수술을 앞두신 어머니가 평안한 마음으로 수술받고 잘 회복하시도록 기도해 주세요.', created_at:iso(now-2*DAY), ends_at:iso(now+5*DAY), base:23}),
+      P({id:4, user_id:ME, content:'새 학기 소그룹 리더로 섬길 힘과 지혜를 주시도록.', created_at:iso(now-1*DAY), ends_at:iso(now+6*DAY), base:5}),
+      P({id:5, user_id:ME, content:'아버지의 건강검진 결과가 좋게 나오고, 가족 모두가 불안 대신 평안을 누리도록.', created_at:iso(now-8*DAY), ends_at:iso(now-1*DAY), base:37}),
+      P({id:6, user_id:'u3', content:'원하던 회사에 합격하도록', created_at:iso(now-20*DAY), ends_at:iso(now-13*DAY), base:29, answer:'HISWAY', answer_comment:'그 회사는 아니었지만, 더 맞는 자리로 인도하셨어요.', answered_at:iso(now-10*DAY)}),
+      P({id:7, user_id:'u4', content:'할머니가 무사히 퇴원하시도록', created_at:iso(now-16*DAY), ends_at:iso(now-9*DAY), base:33, answer:'O', answer_comment:'지난주에 퇴원하셨어요. 함께 기도해 주셔서 감사해요.', answered_at:iso(now-7*DAY)}),
+      P({id:8, user_id:'u1', is_anonymous:true, content:'가족과의 관계가 회복되도록', created_at:iso(now-30*DAY), ends_at:iso(now-23*DAY), base:19, answer:'WAIT', answer_comment:'아직 기다리는 중이에요. 조급해하지 않고 계속 기도할게요.', answered_at:iso(now-15*DAY)}),
+      P({id:9, user_id:ME, content:'시험 기간 동안 건강을 지켜주시도록', created_at:iso(now-40*DAY), ends_at:iso(now-33*DAY), base:12, answer:'O', answer_comment:'', answered_at:iso(now-30*DAY), answer_public:false}),
+      P({id:10, group_id:'g2', user_id:'u5', content:'새벽기도에 함께하는 사람들이 지치지 않도록', created_at:iso(now-3*HOUR), ends_at:iso(now+7*DAY), base:6}),
+      P({id:11, group_id:'g2', user_id:'u1', is_anonymous:true, content:'이번 주 중요한 면접이 있어요. 담대하게 말할 수 있도록.', created_at:iso(now-1*DAY), ends_at:iso(now+3*DAY), base:9}),
+      P({id:12, group_id:'g3', user_id:'u2', content:'목장 식구들의 가정에 평안이 있도록', created_at:iso(now-2*DAY), ends_at:iso(now+5*DAY), base:4}),
+    ];
+    return {v:2, session:true, profile, readings, prayers, marks:[], users, groups, members};
+  }
+  const sess = () => db.session ? {user:{id:ME, email:db.profile.email}} : null;
+  const nick = u => u === ME ? db.profile.nickname : db.users[u]?.nickname;
+  const role = (g,u=ME) => db.members.find(m => m.group_id === g && m.user_id === u)?.role || null;
+  const canView = g => db.profile.is_super_admin || !!role(g);
+  const canMod = g => db.profile.is_super_admin || role(g) === 'admin';
+  const deny = () => { throw {message:'NOT_ALLOWED'}; };
+  const view = p => {
+    const my = db.marks.filter(m => m.id === p.id), mine = p.user_id === ME;
+    return {id:p.id, content:p.content, author: (p.is_anonymous && !mine) ? null : nick(p.user_id), is_mine:mine, is_anonymous:p.is_anonymous,
+      ends_at:p.ends_at, created_at:p.created_at, mark_count:p.base + my.length, my_mark_count:my.length, my_last_mark: my.length ? my[my.length-1].at : null,
+      answer:p.answer, answer_comment:p.answer_comment, answered_at:p.answered_at, answer_public:p.answer_public};
+  };
+  return {
+    async init(){ try{ db = JSON.parse(lsGet(KEY)); }catch(e){ db = null; } if(!db || db.v !== 2){ db = seed(); save(); } db.readings.forEach((r,i) => { if(r.id == null) r.id = i+1; }); S.session = sess(); },
+    async signIn(email){ db.session = true; if(email) db.profile.email = email; save(); return {session:sess()}; },
+    async signUp(email){ return this.signIn(email); },
+    async signOut(){ db.session = false; save(); },
+    async loadProfile(){ return {...db.profile}; },
+    async updateProfile(p){ if(p.nickname && Object.values(db.users).some(u => u.nickname === p.nickname)) throw {code:'23505'}; Object.assign(db.profile, p); save(); return {...db.profile}; },
+    async loadGroups(){ if(!db.profile.is_super_admin) return []; return db.groups.map(g => ({...g, my_role: role(g.id), member_count: db.members.filter(m => m.group_id === g.id).length})); },
+    async groupInfo(g){ if(!canView(g)) throw {message:'NOT_MEMBER'}; const x = db.groups.find(y => y.id === g); return x ? {...x, code: canMod(g) ? x.code : null, my_role: role(g), member_count: db.members.filter(m => m.group_id === g).length} : null; },
+    async setSuper(v){ db.profile.is_super_admin = v; save(); },
+    async joinGroup(c){ const g = db.groups.find(x => x.code === String(c).trim().toUpperCase()); if(!g) throw {message:'BAD_CODE'}; if(!role(g.id)) db.members.push({group_id:g.id, user_id:ME, role:'member', joined_at:new Date().toISOString()}); save(); return g.id; },
+    async leaveGroup(g){ db.members = db.members.filter(m => !(m.group_id === g && m.user_id === ME)); save(); },
+    async createGroup(name){ if(!db.profile.is_super_admin) deny(); const id = 'g'+Date.now(); db.groups.push({id, name, code:code()}); db.members.push({group_id:id, user_id:ME, role:'admin', joined_at:new Date().toISOString()}); save(); return id; },
+    async renameGroup(g,name){ if(!db.profile.is_super_admin) deny(); db.groups.find(x => x.id === g).name = name; save(); },
+    async deleteGroup(g){ if(!db.profile.is_super_admin) deny(); db.groups = db.groups.filter(x => x.id !== g); db.members = db.members.filter(m => m.group_id !== g); db.prayers = db.prayers.filter(p => p.group_id !== g); save(); },
+    async setRole(g,u,r){ if(!db.profile.is_super_admin) deny(); const m = db.members.find(x => x.group_id === g && x.user_id === u); if(m) m.role = r; save(); },
+    async listMembers(g){ if(!canMod(g)) deny(); return db.members.filter(m => m.group_id === g).map(m => ({user_id:m.user_id, nickname:nick(m.user_id), role:m.role, joined_at:m.joined_at})).sort((a,b) => (b.role==='admin') - (a.role==='admin') || a.nickname.localeCompare(b.nickname)); },
+    async removeMember(g,u){ if(!canMod(g) || u === ME || (role(g,u) === 'admin' && !db.profile.is_super_admin)) deny(); db.members = db.members.filter(m => !(m.group_id === g && m.user_id === u)); save(); },
+    async regenCode(g){ if(!canMod(g)) deny(); const gr = db.groups.find(x => x.id === g); gr.code = code(); save(); return gr.code; },
+    async loadPrayers(g){
+      if(!canView(g)) throw {message:'NOT_MEMBER'};
+      const now = Date.now();
+      return db.prayers.filter(p => p.group_id === g && (p.user_id === ME || (!p.answer && new Date(p.ends_at) > now) || (ARCHIVED.includes(p.answer) && p.answer_public)))
+        .map(view).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    },
+    async createPrayer(o){ if(!canView(o.group_id)) deny(); db.prayers.push({id:Date.now(), user_id:ME, base:0, created_at:new Date().toISOString(), answer:null, answer_comment:null, answered_at:null, answer_public:db.profile.answer_public_default, ...o}); save(); },
+    async markPrayer(id){
+      const p = db.prayers.find(x => x.id === id);
+      if(!p || p.answer || new Date(p.ends_at) <= Date.now()) throw {message:'PRAYER_CLOSED'};
+      const mine = db.marks.filter(m => m.id === id), last = mine[mine.length-1];
+      if(last && Date.now() - new Date(last.at) < HOUR) throw {message:'TOO_SOON'};
+      db.marks.push({id, at:new Date().toISOString()}); save();
+    },
+    async answerPrayer(id,o){ Object.assign(db.prayers.find(x => x.id === id), o, {answered_at: o.answer ? new Date().toISOString() : null}); save(); },
+    async setAnswerPublic(id,v){ db.prayers.find(x => x.id === id).answer_public = v; save(); },
+    async deletePrayer(id){ db.prayers = db.prayers.filter(x => x.id !== id); db.marks = db.marks.filter(m => m.id !== id); save(); },
+    async modDelete(id){ const p = db.prayers.find(x => x.id === id); if(!p) return; if(!(p.user_id === ME || canMod(p.group_id))) deny(); return this.deletePrayer(id); },
+    async loadReadings(){ return db.readings.slice(); },
+    async addReadings(list){ const d = appToday(), base = Date.now(); list.forEach((r,i) => db.readings.push({id:base+i, book:r.book, chapter:r.chapter, read_on:d})); save(); },
+    async deleteReadings(ids){ const set = new Set(ids); db.readings = db.readings.filter(r => !set.has(r.id)); save(); },
+    async loadBoard(g){
+      if(!canView(g)) throw {message:'NOT_MEMBER'};
+      const me = computeProgress(db.profile, db.readings);
+      return db.members.filter(m => m.group_id === g).map(m => m.user_id === ME
+        ? {nickname:db.profile.nickname, pct:Math.floor(me.pct*10)/10, is_me:true}
+        : {nickname:db.users[m.user_id].nickname, pct:db.users[m.user_id].pct, is_me:false}).sort((a,b) => b.pct - a.pct);
+    },
+    async todayReaders(g){
+      if(!canView(g)) throw {message:'NOT_MEMBER'};
+      const today = appToday();
+      return db.members.filter(m => m.group_id === g && (m.user_id === ME ? db.readings.some(r => r.read_on === today) : db.users[m.user_id].today)).length;
+    },
+    async reset(){ db = seed(); save(); S.session = sess(); }
+  };
+}
+
+const API = IS_DEMO ? demoApi() : supabaseApi();
+
+/* ─── 아이콘 ─── */
+const ic = (d,s=20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const I = {
+  check: s => ic('<path d="M20 6 9 17l-5-5"/>',s), clock: s => ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',s),
+  plus: s => ic('<path d="M12 5v14M5 12h14"/>',s), x: s => ic('<path d="M6 6l12 12M18 6 6 18"/>',s),
+  user: s => ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',s),
+  hands: s => ic('<path d="M7 11V5a2 2 0 0 1 4 0v6"/><path d="M11 9a2 2 0 0 1 4 0v2"/><path d="M7 11c-2 1-3 3-2 5l2 3a4 4 0 0 0 3 2h4a4 4 0 0 0 4-4v-6"/>',s),
+  book: s => ic('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',s),
+  box: s => ic('<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',s),
+  lock: s => ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',s),
+  globe: s => ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',s),
+  refresh: s => ic('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',s),
+  cal: s => ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',s),
+  right: s => ic('<path d="m9 6 6 6-6 6"/>',s), left: s => ic('<path d="m15 6-6 6 6 6"/>',s), down: s => ic('<path d="m6 9 6 6 6-6"/>',s),
+  shield: s => ic('<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',s),
+  copy: s => ic('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',s),
+  users: s => ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>',s),
+};
+
+/* ─── 화면 조각 ─── */
+function heroHtml(tall, withBtn){
+  return `<header class="hero${tall?' tall':''}">
+    <svg class="scene scene-day" viewBox="0 0 390 224" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs><linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE0F3"/><stop offset="0.6" stop-color="#FDEBD0"/><stop offset="1" stop-color="#FFD9A6"/></linearGradient>
+      <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE29A" stop-opacity="0.9"/><stop offset="1" stop-color="#FFE29A" stop-opacity="0"/></radialGradient></defs>
+      <rect x="-200" width="790" height="224" fill="url(#skyDay)"/><circle cx="292" cy="178" r="96" fill="url(#sunGlow)"/><circle cx="292" cy="182" r="34" fill="#FFB648"/>
+      <path d="M-200 182 C -100 160, -40 150, 0 178 C 70 150, 130 152, 200 172 S 330 196, 390 168 C 460 150, 530 170, 590 160 V 224 H -200 Z" fill="#B9D89A"/>
+      <path d="M-200 204 C -120 186, -60 186, 0 200 C 60 182, 140 180, 220 196 S 340 214, 390 196 C 470 182, 530 196, 590 190 V 224 H -200 Z" fill="#8DBF73"/>
+      <path d="M-200 218 C -100 208, -50 210, 0 216 C 90 204, 200 206, 280 214 S 370 222, 390 214 C 470 206, 530 212, 590 210 V 224 H -200 Z" fill="#6AA45A"/>
+      <path d="M58 178 l -6 -14 l 12 0 z M 72 176 l -5 -11 l 10 0 z" fill="#5E9150"/>
+    </svg>
+    <svg class="scene scene-night" viewBox="0 0 390 224" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs><linearGradient id="skyNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070E26"/><stop offset="0.65" stop-color="#16244D"/><stop offset="1" stop-color="#2A3C6B"/></linearGradient>
+      <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#9CC2FF" stop-opacity="0.35"/><stop offset="1" stop-color="#9CC2FF" stop-opacity="0"/></radialGradient></defs>
+      <rect x="-200" width="790" height="224" fill="url(#skyNight)"/><circle cx="64" cy="62" r="52" fill="url(#moonGlow)"/><circle cx="64" cy="62" r="20" fill="#F3EBD2"/><circle cx="73" cy="55" r="17" fill="#0B1430"/>
+      <g fill="#F3EBD2"><circle cx="140" cy="40" r="1.4"/><circle cx="196" cy="70" r="1"/><circle cx="250" cy="34" r="1.6"/><circle cx="310" cy="84" r="1.1"/><circle cx="352" cy="120" r="1.3"/><circle cx="28" cy="130" r="1"/><circle cx="110" cy="92" r="0.9"/><circle cx="226" cy="150" r="1"/><circle cx="178" cy="22" r="1"/><circle cx="-60" cy="50" r="1.2"/><circle cx="450" cy="40" r="1.3"/><circle cx="520" cy="100" r="1"/></g>
+      <path d="M-200 182 C -100 160, -40 150, 0 178 C 70 150, 130 152, 200 172 S 330 196, 390 168 C 460 150, 530 170, 590 160 V 224 H -200 Z" fill="#24405A"/>
+      <path d="M-200 204 C -120 186, -60 186, 0 200 C 60 182, 140 180, 220 196 S 340 214, 390 196 C 470 182, 530 196, 590 190 V 224 H -200 Z" fill="#1A3145"/>
+      <path d="M-200 218 C -100 208, -50 210, 0 216 C 90 204, 200 206, 280 214 S 370 222, 390 214 C 470 206, 530 212, 590 210 V 224 H -200 Z" fill="#122434"/>
+      <path d="M58 178 l -6 -14 l 12 0 z M 72 176 l -5 -11 l 10 0 z" fill="#132A3A"/><circle cx="318" cy="188" r="2.2" fill="#FFD27A"/><circle cx="330" cy="191" r="1.6" fill="#FFD27A"/>
+    </svg>
+    ${withBtn ? `<button class="icon-btn hero-btn" data-act="refresh" aria-label="새로고침">${I.refresh(22)}</button>` : ''}
+    <h1><img class="logo-day" src="logo-light.png" alt="누군가 널 위해 기도하네"><img class="logo-night" src="logo-dark.png" alt="누군가 널 위해 기도하네"></h1>
+  </header>`;
+}
+
+const demoBar = () => {
+  if(!IS_DEMO) return '';
+  if(!S.session) return `<div class="demo pad"><span>체험 모드 · 아무 이메일로 로그인하고 코드 GRACE7 또는 DAWN24를 넣어보세요</span></div>`;
+  return `<div class="demo pad"><span>체험 모드 · 이 브라우저에만 저장</span><span class="foot-actions">${S.profile ? `<button data-act="demoRole">${isSuper() ? '서버 관리자로 보기' : '총 관리자로 보기'}</button>` : ''}<button data-act="demoReset">처음 상태로</button></span></div>`;
+};
+
+function navHtml(){
+  const t = [['pray','기도',I.hands(22)],['bible','성경',I.book(22)],['answers','응답',I.box(22)],['me','내 정보',I.user(22)]];
+  return `<nav class="nav" aria-label="메뉴">${t.map(([k,l,svg]) => `<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}>${svg}${l}</button>`).join('')}</nav>`;
+}
+function roleBadge(g = curGroup()){
+  if(isSuper()) return `<span class="pill">${I.shield(13)}총 관리자</span>`;
+  if(g?.my_role === 'admin') return `<span class="pill">${I.shield(13)}서버 관리자</span>`;
+  return '';
+}
+function serverBar(){
+  const g = curGroup();
+  if(!isSuper() || S.groups.length < 2) return `<div class="server-row"><span class="server-btn">${I.users(18)}<span>${esc(g?.name || '')}</span></span>${roleBadge(g)}</div>`;
+  return `<div class="server-row"><button class="server-btn" data-act="openServers" aria-label="서버 바꾸기, 지금 서버 ${esc(g?.name||'')}">${I.users(18)}<span>${esc(g?.name || '서버 선택')}</span>${I.down(16)}</button>${roleBadge(g)}</div>`;
+}
+function joinBox(){
+  return `<section class="panel"><h2>서버에 들어가기</h2>
+    <p class="lead" style="font-size:14px">함께 기도할 모임에서 받은 <b>입장 코드</b>를 입력해 주세요. 기도제목과 응답, 함께 읽는 사람들은 서버마다 따로 보여요.</p>
+    <form class="inline" data-form="join"><input id="join-code" type="text" class="code-input" maxlength="12" placeholder="예: GRACE7" aria-label="입장 코드" autocomplete="off" autocapitalize="characters"><button class="btn btn-accent" type="submit">들어가기</button></form>
+    ${isSuper() ? `<button class="btn btn-ghost" data-act="goAdmin">${I.shield(16)}서버 만들기 · 관리</button>` : ''}</section>`;
+}
+
+function ansBadge(a){ if(!a) return ''; if(a==='NONE') return '<span class="pill muted">응답 선택 안 함</span>'; return `<span class="pill ans-${a}">${ANSWERS[a][0]}</span>`; }
+function ddayPill(endsAt){ const ms = new Date(endsAt) - Date.now(); if(ms <= 0) return '<span class="pill muted">기간 끝남</span>'; if(ms < DAY) return '<span class="pill warn">오늘 마감</span>'; return `<span class="pill">D-${Math.ceil(ms/DAY)}</span>`; }
+function whoName(p){ return p.is_anonymous ? (p.is_mine ? '익명 · 나' : '익명') : esc(p.author || ''); }
+function whoHtml(p, sub){
+  const av = p.is_anonymous ? `<span class="avatar anon">${I.user(16)}</span>` : `<span class="avatar">${esc((p.author||'?').slice(0,1))}</span>`;
+  return `<div class="who">${av}<span class="name">${whoName(p)}</span><span class="time">${sub}</span></div>`;
+}
+function markBtn(p){
+  const last = p.my_last_mark ? new Date(p.my_last_mark).getTime() : 0, left = last + HOUR - Date.now();
+  if(left > 0) return `<button class="btn btn-wait" disabled>${I.clock(16)}${Math.ceil(left/60000)}분 후 다시</button>`;
+  return `<button class="btn btn-accent" data-act="mark" data-id="${p.id}">${I.check(16)}기도했어요</button>`;
+}
+const modBtn = p => (!p.is_mine && canModerate()) ? `<button class="btn btn-sm btn-ghost mod" data-act="askModDelete" data-id="${p.id}" aria-label="관리자 권한으로 이 기도제목 삭제">${I.shield(14)}삭제</button>` : '';
+function prayerCard(p){
+  const active = !p.answer && new Date(p.ends_at) > Date.now();
+  let foot = `<div class="card-foot"><span class="count">함께 기도 <b class="num">${p.mark_count}</b>회</span><span class="foot-actions">${modBtn(p)}${active ? markBtn(p) : ''}</span></div>`;
+  const comment = (p.answer && p.answer_comment) ? `<p class="comment">${esc(p.answer_comment)}</p>` : '';
+  if(p.is_mine){
+    const answerLabel = p.answer ? '응답 수정' : (active ? '응답받았어요' : '응답 기록');
+    foot += `<div class="row-actions">
+      <button class="btn btn-sm ${!p.answer && !active ? 'btn-strong' : 'btn-ghost'}" data-act="openAnswer" data-id="${p.id}">${answerLabel}</button>
+      ${ARCHIVED.includes(p.answer) ? `<span class="pill muted">${p.answer_public ? I.globe(13)+'보관함에 공개' : I.lock(13)+'나만 보기'}</span>` : ''}
+      <button class="btn btn-sm btn-ghost" style="margin-left:auto" data-act="askDelete" data-id="${p.id}">삭제</button></div>`;
+  }
+  return `<article class="card">
+    <div class="card-top">${whoHtml(p, rel(p.created_at))}${p.answer ? ansBadge(p.answer) : ddayPill(p.ends_at)}</div>
+    <p class="content">${esc(p.content)}</p>${comment}${foot}</article>`;
+}
+
+function prayHtml(){
+  const g = curGroup();
+  if(!g) return heroHtml(false, false) + demoBar() + `<div class="panels pad">${joinBox()}</div>`;
+  const now = Date.now(), P = S.prayers;
+  const active = P.filter(p => !p.answer && new Date(p.ends_at) > now);
+  const mine = P.filter(p => p.is_mine);
+  const soon = active.filter(p => new Date(p.ends_at) - now < DAY);
+  const list = {active, mine, soon}[S.prayTab];
+  const tabs = [['active','진행 중',active.length],['mine','내 기도제목',mine.length],['soon','곧 마감',soon.length]];
+  const emptyMsg = {active:'아직 나눠진 기도제목이 없어요.<br>첫 기도제목을 나눠 보세요.', mine:'내가 나눈 기도제목이 여기에 모여요.', soon:'오늘 마감되는 기도제목이 없어요.'}[S.prayTab];
+  return heroHtml(false, true) + demoBar() +
+    `<div class="filterbar pad">${serverBar()}<div class="chips">${tabs.map(([k,l,n]) => `<button class="chip ${S.prayTab===k?'on':''}" data-act="prayTab" data-v="${k}" aria-pressed="${S.prayTab===k}">${l} <span class="num">${n}</span></button>`).join('')}</div></div>
+    <div class="list pad">${list.length ? list.map(prayerCard).join('') : `<p class="empty">${emptyMsg}</p>`}</div>
+    <button class="fab" data-act="compose">${I.plus(18)}기도제목</button>`;
+}
+
+function bibleHtml(){
+  const pr = computeProgress(S.profile, S.readings);
+  return `<div class="topbar pad" style="background:var(--surface)"><h1>성경 통독</h1></div>
+    <div class="pad" style="background:var(--surface);padding-bottom:4px"><div class="seg" role="tablist">
+      <button class="${S.bibleView==='check'?'on':''}" data-act="bibleView" data-v="check" aria-pressed="${S.bibleView==='check'}">읽은 장 체크</button>
+      <button class="${S.bibleView==='stats'?'on':''}" data-act="bibleView" data-v="stats" aria-pressed="${S.bibleView==='stats'}">통계</button></div></div>` +
+    demoBar() + (S.bibleView === 'check' ? checkHtml(pr) : statsHtml(pr));
+}
+function planLabel(pr){
+  const y1 = pr.start.slice(0,4), y2 = pr.end.slice(0,4);
+  const period = (pr.start.endsWith('-01-01') && pr.end.endsWith('-12-31') && y1===y2) ? `${y1}년` : `${ymd(pr.start)} – ${ymd(pr.end)}`;
+  return `${period} · ${SCOPE_NAME[pr.scope]} ${pr.times}회`;
+}
+function readersHtml(){
+  if(!curGroup()) return '';
+  const n = S.todayReaders;
+  return `<div class="readers">${I.users(16)}${n ? `<span>${esc(curGroup().name)}에서 오늘 <b class="num">${n}명</b>이 읽었어요</span>` : `<span>${esc(curGroup().name)}에서 오늘은 아직 읽은 사람이 없어요</span>`}</div>`;
+}
+function checkHtml(pr){
+  const testaments = pr.scope === 'ALL' ? ['OT','NT'] : [pr.scope];
+  if(!testaments.includes(S.testament)) S.testament = testaments[0];
+  const books = BOOKS.filter(b => b.t === S.testament);
+  const doneIn = b => { let n = 0; for(let c=1;c<=b.c;c++) if((pr.counts.get(b.id+'-'+c)||0) >= pr.times) n++; return n; };
+  if(!books.some(b => b.id === S.bookId)){ const next = books.find(b => doneIn(b) < b.c) || books[0]; S.bookId = next.id; }
+  const book = BOOK[S.bookId];
+  const tabs = testaments.length > 1 ? `<div class="seg">${testaments.map(t => `<button class="${S.testament===t?'on':''}" data-act="testament" data-v="${t}" aria-pressed="${S.testament===t}">${SCOPE_NAME[t]} ${t==='OT'?39:27}권</button>`).join('')}</div>` : '';
+  const chips = books.map(b => { const full = doneIn(b) === b.c; return `<button class="chip ${b.id===S.bookId?'on':''}" data-act="book" data-v="${b.id}" aria-pressed="${b.id===S.bookId}">${b.name}${full ? I.check(14) : ''}</button>`; }).join('');
+  let cells = '';
+  const allCounts = new Map(); S.readings.forEach(r => { const k = r.book+'-'+r.chapter; allCounts.set(k, (allCounts.get(k)||0)+1); });
+  for(let c=1;c<=book.c;c++){
+    const k = book.id+'-'+c, n = pr.counts.get(k) || 0, sel = S.sel.has(k);
+    const label = `${book.name} ${c}장${n>0 ? `, ${n}번 읽음` : ''}`;
+    const sup = n>1 || (pr.times>1 && n>0) ? `<sup>×${n}</sup>` : '';
+    if(S.fixMode){
+      const has = (allCounts.get(k) || 0) > 0;
+      cells += `<button class="ch num ${sel ? 'del' : (n>0 ? 'done' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}${has ? '' : ', 지울 기록 없음'}" ${has ? '' : 'disabled'}>${c}${sup}</button>`;
+    } else {
+      cells += `<button class="ch num ${sel ? 'sel' : (n>0 ? 'done' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}">${c}${sup}</button>`;
+    }
+  }
+  return `<section class="bible-head pad">
+      <div class="goal-row"><div><div class="eyebrow">${planLabel(pr)}</div><p class="big num">${floor1(pr.pct)}%</p></div>
+        <span class="count num"><b>${pr.done.toLocaleString('ko-KR')}</b> / ${pr.total.toLocaleString('ko-KR')}장</span></div>
+      <div class="bar"><i style="width:${Math.min(100,pr.pct)}%"></i></div>
+      ${readersHtml()}
+      ${tabs}
+    </section>
+    <div class="pad"><div class="chips">${chips}</div>
+      <div class="book-title"><div style="display:flex;align-items:baseline;gap:8px"><h2>${book.name}</h2><span class="count num">${doneIn(book)} / ${book.c}장</span></div>
+        <button class="btn btn-sm ${S.fixMode ? 'btn-strong' : 'btn-ghost'}" data-act="toggleFix" aria-pressed="${!!S.fixMode}">${S.fixMode ? '고치기 끝' : '잘못 누른 기록 지우기'}</button></div>
+      <p class="hint" style="margin:-4px 0 10px">${S.fixMode ? '지울 장을 누르세요. 그 장의 가장 최근 읽은 기록 하나가 지워져요.' : '누른 채로 밀면 여러 장을 한 번에 고를 수 있어요'}</p>
+      <div class="grid">${cells}</div></div>
+    ${S.sel.size ? (S.fixMode ? unreadHtml() : confirmHtml()) : ''}`;
+}
+function selDetail(){
+  const groups = {};
+  [...S.sel].forEach(k => { const [b,c] = k.split('-').map(Number); (groups[b] = groups[b] || []).push(c); });
+  return Object.keys(groups).map(Number).sort((a,b)=>a-b).map(b => `${BOOK[b].name} ${groups[b].sort((x,y)=>x-y).join(', ')}장`).join(' · ');
+}
+function unreadHtml(){
+  return `<div class="confirm" role="region" aria-label="읽은 기록 지우기">
+    <div style="display:flex;flex-direction:column;gap:2px"><small>${esc(selDetail())}</small><strong><span class="num">${S.sel.size}</span>장의 읽은 기록을 지울까요?</strong></div>
+    <div class="btn-row"><button class="btn btn-ghost" data-act="clearSel">취소</button><button class="btn btn-danger" data-act="confirmUnread">지우기</button></div></div>`;
+}
+function confirmHtml(){
+  const groups = {};
+  [...S.sel].forEach(k => { const [b,c] = k.split('-').map(Number); (groups[b] = groups[b] || []).push(c); });
+  const detail = Object.keys(groups).map(Number).sort((a,b)=>a-b).map(b => `${BOOK[b].name} ${groups[b].sort((x,y)=>x-y).join(', ')}장`).join(' · ');
+  return `<div class="confirm" role="region" aria-label="읽은 장 등록">
+    <div style="display:flex;flex-direction:column;gap:2px"><small>${esc(detail)}</small><strong>${md(appToday())}, <span class="num">${S.sel.size}</span>장 읽었습니다.</strong></div>
+    <div class="btn-row"><button class="btn btn-ghost" data-act="clearSel">취소</button><button class="btn btn-accent" data-act="confirmRead">확인</button></div></div>`;
+}
+function statsHtml(pr){
+  const today = appToday();
+  const days = Array.from({length:7}, (_,i) => addDays(today, i-6));
+  const perDayCount = Object.fromEntries(days.map(d => [d,0]));
+  S.readings.forEach(r => { if(r.read_on in perDayCount) perDayCount[r.read_on]++; });
+  const vals = days.map(d => perDayCount[d]), weekTotal = vals.reduce((a,b)=>a+b,0);
+  const per = pr.perDay, scaleMax = Math.max(1, ...vals, per);
+  const H = 100;
+  const cols = days.map((d,i) => `<div class="col ${d===today?'today':''}"><span class="num">${vals[i]}</span><i style="height:${Math.round(vals[i]/scaleMax*H)}px"></i></div>`).join('');
+  const dayLabels = days.map(d => `<span class="${d===today?'today':''}">${d===today ? '오늘' : weekday(d)}</span>`).join('');
+  const target = per > 0 ? `<div class="target" style="bottom:${Math.round(per/scaleMax*H)}px"></div>` : '';
+  let goalText;
+  if(pr.remaining <= 0) goalText = `<span class="eyebrow">목표 달성</span><span class="per">완독!</span><p>${planLabel(pr)} 목표를 이뤘어요.</p>`;
+  else if(pr.daysLeft === 0) goalText = `<span class="eyebrow">기간이 끝났어요</span><span class="per num">${floor1(pr.pct)}%</span><p>남은 ${pr.remaining.toLocaleString('ko-KR')}장 · 내 정보에서 기간을 늘릴 수 있어요</p>`;
+  else goalText = `<span class="eyebrow">목표까지 하루에</span><span class="per num">${ceil1(per)}장</span><p class="num">남은 ${floor1(100-pr.pct)}% · ${pr.remaining.toLocaleString('ko-KR')}장 · ${pr.daysLeft}일<br>오늘 읽은 분량 <b>${pr.todayCount} / ${ceil1(per)}장</b></p>`;
+  const g = curGroup();
+  const board = S.board.map(b => `<div class="${b.is_me?'me':''}"><span class="nm">${esc(b.nickname)}</span><span class="bar"><i style="width:${Math.min(100,b.pct)}%"></i></span><span class="pc num">${Number(b.pct).toFixed(1)}%</span></div>`).join('');
+  const boardPanel = g ? `<section class="panel">
+      <div class="panel-head"><h2>함께 읽는 사람들</h2><span class="count">오늘 <b class="num">${S.todayReaders}명</b> 읽음</span></div>
+      <span class="hint" style="margin-top:-8px">${esc(g.name)} 멤버</span>
+      <div class="board">${board || '<span class="hint">아직 함께 읽는 사람이 없어요.</span>'}</div></section>`
+    : `<section class="panel"><h2>함께 읽는 사람들</h2><p class="hint">서버에 들어가면 같은 서버 사람들의 진행률이 보여요.</p></section>`;
+  return `<div class="panels pad">
+    <section class="panel"><div class="goal">
+      <div class="ring" role="img" aria-label="목표 달성률 ${floor1(pr.pct)}%" style="background:conic-gradient(var(--accent) 0 ${pr.pct}%, var(--accent-tint) 0)"><div><b class="num">${floor1(pr.pct)}%</b><small class="num">${pr.done.toLocaleString('ko-KR')} / ${pr.total.toLocaleString('ko-KR')}장</small></div></div>
+      <div class="goal-text">${goalText}</div></div></section>
+    <section class="panel">
+      <div class="panel-head"><h2>최근 7일 읽은 성경</h2><span class="count num">${md(days[0])} – ${md(today)} · <b>${weekTotal}장</b></span></div>
+      <div class="chart" role="img" aria-label="요일별 읽은 장 수: ${days.map((d,i)=>`${weekday(d)} ${vals[i]}장`).join(', ')}">${target}${cols}</div>
+      <div class="days">${dayLabels}</div>
+      ${per > 0 ? `<span class="legend"><i></i>목표 페이스 하루 ${ceil1(per)}장</span>` : ''}
+    </section>${boardPanel}</div>`;
+}
+
+function answersHtml(){
+  const g = curGroup();
+  if(!g) return `<div class="topbar pad"><h1>응답 보관함</h1></div>` + demoBar() + `<div class="panels pad">${joinBox()}</div>`;
+  const all = S.prayers.filter(p => ARCHIVED.includes(p.answer));
+  const list = all.filter(p => S.ansScope === 'all' || p.is_mine).sort((a,b) => new Date(b.answered_at||0) - new Date(a.answered_at||0));
+  const n = k => list.filter(p => p.answer === k).length;
+  const cards = list.map(p => `<article class="card">
+      <div class="card-top">${ansBadge(p.answer)}<span class="time">${whoName(p)} · ${p.answered_at ? md(kstDate(p.answered_at)) : ''}</span></div>
+      <p class="content" style="font-weight:700">${esc(p.content)}</p>
+      ${p.answer_comment ? `<p class="comment">${esc(p.answer_comment)}</p>` : ''}
+      <div class="card-foot"><span class="count">함께 기도 <b class="num">${p.mark_count}</b>회</span><span class="foot-actions">${modBtn(p)}
+      ${p.is_mine ? `<button class="btn btn-sm btn-ghost" data-act="togglePublic" data-id="${p.id}" aria-label="${p.answer_public ? '나만 보기로 바꾸기' : '보관함에 공개하기'}">${p.answer_public ? I.globe(15)+'공개 중' : I.lock(15)+'나만 보기'}</button>` : ''}</span></div>
+    </article>`).join('');
+  return `<div class="ans-head pad"><div class="between"><span class="eyebrow" style="color:var(--accent-ink)">응답 보관함 · ${esc(g.name)}</span></div>
+      <h1>하나님이 하신 일 <span class="num">${list.length}</span>가지</h1>
+      <div class="tiles">${ARCHIVED.map(k => `<div class="tile"><small>${ANSWERS[k][0]}</small><b class="num">${n(k)}</b></div>`).join('')}</div>
+      <div class="seg"><button class="${S.ansScope==='all'?'on':''}" data-act="ansScope" data-v="all" aria-pressed="${S.ansScope==='all'}">모두의 응답</button><button class="${S.ansScope==='mine'?'on':''}" data-act="ansScope" data-v="mine" aria-pressed="${S.ansScope==='mine'}">내 응답</button></div>
+    </div>` + demoBar() + `<div class="list pad">${cards || `<p class="empty">아직 기록된 응답이 없어요.<br>내 기도제목에서 응답을 기록하면 여기에 모여요.</p>`}</div>`;
+}
+
+/* ─── 달력 ─── */
+function calHtml(target, value, min, max){
+  if(!S.cal || S.cal.target !== target) S.cal = {target, month:(value || min || kstDate(Date.now())).slice(0,7)};
+  const [y,m] = S.cal.month.split('-').map(Number);
+  const first = new Date(Date.UTC(y,m-1,1)).getUTCDay(), n = new Date(Date.UTC(y,m,0)).getUTCDate();
+  const today = kstDate(Date.now());
+  let cells = WD.map((w,i) => `<span class="wd ${i===0?'sun':''}" aria-hidden="true">${w}</span>`).join('') + '<span></span>'.repeat(first);
+  for(let d=1; d<=n; d++){
+    const ds = `${y}-${pad2(m)}-${pad2(d)}`, dis = (min && ds < min) || (max && ds > max);
+    cells += `<button type="button" class="cal-day num ${ds===value?'sel':''} ${ds===today?'today':''}" data-act="calPick" data-v="${ds}" ${dis?'disabled':''} aria-label="${m}월 ${d}일 ${weekday(ds)}요일" aria-pressed="${ds===value}">${d}</button>`;
+  }
+  return `<div class="cal" role="group" aria-label="날짜 고르기"><div class="cal-head">
+      <button type="button" class="icon-btn" data-act="calNav" data-v="-1" aria-label="이전 달">${I.left(20)}</button><b class="num">${y}년 ${m}월</b>
+      <button type="button" class="icon-btn" data-act="calNav" data-v="1" aria-label="다음 달">${I.right(20)}</button></div>
+    <div class="cal-grid">${cells}</div></div>`;
+}
+
+/* ─── 내 정보 ─── */
+const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
+function subHead(title, back='내 정보', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
+function meHtml(){
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup}[S.page])();
+  const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
+  const serverSection = (isSuper() && S.groups.length > 1)
+    ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
+  const adminSection = isSuper() ? menuRow('page',`${I.shield(16)} 서버 관리`,'총 관리자','data-v="admin"')
+    : (g?.my_role === 'admin' ? menuRow('adminGroup',`${I.shield(16)} 이 서버 관리`,'서버 관리자',`data-id="${g.id}"`) : '');
+  return `<div class="topbar pad"><div><h1>내 정보</h1><span class="hint">${esc(S.session?.user?.email || '')}</span></div></div>` + demoBar() +
+  `<div class="settings pad">
+    <section class="group"><h2>프로필</h2><div class="menu">${menuRow('page','별명',esc(p.nickname),'data-v="nick"')}</div></section>
+    ${serverSection ? `<section class="group"><h2>서버</h2>${serverSection}</section>` : ''}
+    <section class="group"><h2>성경 통독</h2><div class="menu">${menuRow('page','통독 목표',planLabel(pr),'data-v="plan"')}</div></section>
+    <section class="group"><h2>설정</h2><div class="menu">
+      ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
+      ${menuRow('page','화면',{system:'시스템',light:'라이트',dark:'다크'}[S.theme],'data-v="theme"')}</div></section>
+    ${adminSection ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}</div></section>` : ''}
+    <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
+  </div>`;
+}
+function pageNick(){
+  if(S.draft.nick === undefined) S.draft.nick = S.profile.nickname;
+  return subHead('별명') + `<div class="settings pad"><form class="panel" data-form="nickname">
+    <div class="field"><label class="label" for="me-nick">새 별명</label><input id="me-nick" type="text" maxlength="12" value="${esc(S.draft.nick)}" data-model="nick" autocomplete="nickname"></div>
+    <span class="hint">기도제목과 함께 읽는 사람들에 이 이름으로 보여요. 2–12자, 다른 사람과 겹칠 수 없어요.</span>
+    <button class="btn btn-strong btn-block" type="submit">저장</button></form></div>`;
+}
+function pageServers(){
+  const rows = S.groups.map(g => {
+    const cur = g.id === S.groupId;
+    return `<div class="member"><div class="who" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="name">${esc(g.name)} ${cur ? '<span class="pill">지금 보는 서버</span>' : ''}</span>
+        <span class="time">멤버 ${g.member_count}명${g.my_role ? ` · ${g.my_role==='admin'?'서버 관리자':'멤버'}` : ' · 총 관리자로 보는 중'}</span></div>
+      <span class="foot-actions">${cur ? '' : `<button class="btn btn-sm btn-ghost" data-act="switchGroup" data-id="${g.id}">보기</button>`}
+      ${g.my_role ? `<button class="btn btn-sm btn-ghost" data-act="askLeave" data-id="${g.id}">나가기</button>` : ''}</span></div>`;
+  }).join('');
+  return subHead('내 서버') + `<div class="settings pad">
+    <section class="panel" style="gap:0;padding-block:6px">${rows || '<p class="hint" style="padding-block:12px">아직 들어간 서버가 없어요.</p>'}</section>
+    <section class="panel"><h2>코드로 들어가기</h2><form class="inline" data-form="join"><input id="join-code" type="text" class="code-input" maxlength="12" placeholder="입장 코드" aria-label="입장 코드" autocomplete="off" autocapitalize="characters"><button class="btn btn-accent" type="submit">들어가기</button></form></section></div>`;
+}
+function pagePlan(){
+  const p = S.profile;
+  if(!S.draft.plan) S.draft.plan = {start:p.plan_start, end:p.plan_end, scope:p.plan_scope, times:p.plan_times};
+  const d = S.draft.plan;
+  const total = (d.scope==='ALL' ? 1189 : d.scope==='OT' ? 929 : 260) * d.times;
+  const span = d.end >= d.start ? daysBetween(d.start, d.end) + 1 : 0;
+  const which = S.cal && (S.cal.target === 'planStart' || S.cal.target === 'planEnd') ? S.cal.target : null;
+  const cal = which === 'planStart' ? calHtml('planStart', d.start, null, d.end) : which === 'planEnd' ? calHtml('planEnd', d.end, d.start, null) : '';
+  return subHead('통독 목표') + `<div class="settings pad"><section class="panel">
+      <div class="field"><span class="label">기간</span><div class="btn-row">
+        <button type="button" class="date-btn ${which==='planStart'?'on':''}" data-act="openCal" data-v="planStart" aria-expanded="${which==='planStart'}">${I.cal(16)}<span class="num">${ymd(d.start)}</span></button>
+        <button type="button" class="date-btn ${which==='planEnd'?'on':''}" data-act="openCal" data-v="planEnd" aria-expanded="${which==='planEnd'}">${I.cal(16)}<span class="num">${ymd(d.end)}</span></button></div>
+        ${which ? `<span class="hint">${which==='planStart' ? '시작일' : '종료일'}을 골라주세요</span>${cal}` : ''}</div>
+      <div class="field"><span class="label">범위</span><div class="seg three">${['OT','NT','ALL'].map(s => `<button class="${d.scope===s?'on':''}" data-act="planScope" data-v="${s}" aria-pressed="${d.scope===s}">${SCOPE_NAME[s]}</button>`).join('')}</div></div>
+      <div class="between"><span class="label">통독 횟수</span><div class="stepper"><button data-act="planTimes" data-v="-1" aria-label="줄이기">−</button><b class="num">${d.times}회</b><button data-act="planTimes" data-v="1" aria-label="늘리기">+</button></div></div>
+      <div class="calc num">${span ? `${total.toLocaleString('ko-KR')}장 · ${span}일 → 하루 약 <b>${ceil1(total/span)}장</b>` : '종료일이 시작일보다 늦어야 해요'}</div>
+      <button class="btn btn-strong btn-block" data-act="savePlan">저장</button></section></div>`;
+}
+function pagePrivacy(){
+  const p = S.profile;
+  return subHead('공개 설정') + `<div class="settings pad"><section class="panel" style="gap:4px;padding-block:8px">
+      <label class="switchrow"><span><b>기도제목을 익명으로 나누기</b><small>새 기도제목을 쓸 때 기본으로 선택돼요</small></span><input class="sw" type="checkbox" id="pref-anon" data-act="prefAnon" ${p.prayer_anon_default?'checked':''}></label>
+      <label class="switchrow"><span><b>응답을 보관함에 공개</b><small>응답을 기록할 때 기본으로 선택돼요</small></span><input class="sw" type="checkbox" id="pref-public" data-act="prefPublic" ${p.answer_public_default?'checked':''}></label>
+    </section></div>`;
+}
+function pageTheme(){
+  return subHead('화면') + `<div class="settings pad"><div class="menu">${['system','light','dark'].map(v =>
+    `<button class="menu-row" data-act="theme" data-v="${v}" aria-pressed="${S.theme===v}"><span>${THEME_NAME[v]}</span><span class="val" style="color:var(--accent)">${S.theme===v ? I.check(20) : ''}</span></button>`).join('')}</div></div>`;
+}
+function pageAdmin(){
+  const list = isSuper() ? S.groups : S.groups.filter(g => g.my_role === 'admin');
+  return subHead('서버 관리') + `<div class="settings pad">
+    ${isSuper() ? `<section class="panel"><h2>새 서버 만들기</h2><form class="inline" data-form="createGroup"><input id="new-group" type="text" maxlength="30" placeholder="예: 청년부" aria-label="새 서버 이름"><button class="btn btn-accent" type="submit">만들기</button></form>
+      <span class="hint">만들면 입장 코드가 생겨요. 코드를 받은 사람만 들어올 수 있어요.</span></section>` : ''}
+    <section class="group"><h2>${isSuper() ? '모든 서버' : '내가 관리하는 서버'}</h2><div class="menu">
+      ${list.map(g => menuRow('adminGroup', esc(g.name), `<span class="code-sm">${esc(g.code)}</span> · ${g.member_count}명`, `data-id="${g.id}"`)).join('') || '<p class="hint" style="padding:16px">서버가 없어요.</p>'}</div></section></div>`;
+}
+function pageAdminGroup(){
+  const g = S.groups.find(x => x.id === S.adminGroupId);
+  const head = t => isSuper() ? subHead(t, '서버 관리', 'backAdmin') : subHead(t);
+  if(!g) return head('서버') + `<p class="empty">서버를 찾지 못했어요.</p>`;
+  const members = S.members.map(m => {
+    const me = m.user_id === S.session.user.id || (IS_DEMO && m.user_id === 'me');
+    const canKick = !me && (isSuper() || m.role !== 'admin');
+    return `<div class="member"><div class="who"><span class="avatar">${esc((m.nickname||'?').slice(0,1))}</span><span class="name">${esc(m.nickname || '(별명 없음)')}${me ? ' · 나' : ''}</span>${m.role==='admin' ? `<span class="pill">${I.shield(12)}관리자</span>` : ''}</div>
+      <span class="foot-actions">${isSuper() && !me ? `<button class="btn btn-sm btn-ghost" data-act="setRole" data-id="${m.user_id}" data-v="${m.role==='admin'?'member':'admin'}">${m.role==='admin' ? '관리자 해제' : '관리자로 임명'}</button>` : ''}
+      ${canKick ? `<button class="btn btn-sm btn-ghost mod" data-act="askKick" data-id="${m.user_id}">내보내기</button>` : ''}</span></div>`;
+  }).join('');
+  return head(esc(g.name)) + `<div class="settings pad">
+    <section class="panel"><div class="between"><h2>입장 코드</h2><span class="hint">이 코드를 아는 사람은 누구나 들어올 수 있어요</span></div>
+      <div class="between"><span class="code num" aria-label="입장 코드 ${esc(g.code.split('').join(' '))}">${esc(g.code)}</span>
+      <span class="foot-actions"><button class="btn btn-sm btn-ghost" data-act="copyCode" data-v="${esc(g.code)}">${I.copy(15)}복사</button><button class="btn btn-sm btn-ghost" data-act="askRegen">새 코드</button></span></div></section>
+    ${isSuper() ? `<section class="panel"><h2>서버 이름</h2><form class="inline" data-form="renameGroup"><input id="rename-group" type="text" maxlength="30" value="${esc(g.name)}" aria-label="서버 이름"><button class="btn btn-strong" type="submit">바꾸기</button></form></section>` : ''}
+    <section class="panel" style="gap:0;padding-block:8px"><div class="between" style="padding-bottom:8px"><h2>멤버 ${S.members.length}명</h2>${isSuper() ? '' : '<span class="hint">관리자 임명은 총 관리자만 할 수 있어요</span>'}</div>${members || '<p class="hint">불러오는 중…</p>'}</section>
+    <span class="hint">부적절한 기도제목은 기도 탭이나 응답 보관함에서 ${I.shield(12)}삭제 버튼으로 지울 수 있어요.</span>
+    ${isSuper() ? `<button class="btn btn-danger btn-block" data-act="askDeleteGroup">서버 삭제</button>` : ''}
+  </div>`;
+}
+
+function authHtml(){
+  const signup = S.authMode === 'signup';
+  return heroHtml(true, false) + demoBar() + `<div class="auth pad">
+    <div class="seg"><button class="${!signup?'on':''}" data-act="authMode" data-v="login" aria-pressed="${!signup}">로그인</button><button class="${signup?'on':''}" data-act="authMode" data-v="signup" aria-pressed="${signup}">회원가입</button></div>
+    <form data-form="auth">
+      <div class="field"><label class="label" for="auth-email">이메일</label><input id="auth-email" type="email" required autocomplete="email" placeholder="name@example.com"></div>
+      <div class="field"><label class="label" for="auth-pw">비밀번호</label><input id="auth-pw" type="password" required minlength="6" autocomplete="${signup?'new-password':'current-password'}" placeholder="6자 이상"></div>
+      <div class="field"><label class="label" for="auth-code">서버 입장 코드</label><input id="auth-code" type="text" class="code-input" maxlength="12" placeholder="모임에서 받은 코드" autocomplete="off" autocapitalize="characters"></div>
+      ${S.authMsg ? `<p class="msg ${S.authMsg.ok?'ok':''}" role="alert">${esc(S.authMsg.text)}</p>` : ''}
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>${signup ? '가입하기' : '로그인'}</button>
+    </form></div>`;
+}
+function codeHtml(){
+  return heroHtml(true, false) + demoBar() + `<div class="auth pad">
+    <p class="lead">함께할 모임에서 받은 <b>서버 입장 코드</b>를 입력해 주세요.</p>
+    <form data-form="join">
+      <div class="field"><label class="label" for="join-code">입장 코드</label><input id="join-code" type="text" class="code-input" required maxlength="12" placeholder="예: GRACE7" autocomplete="off" autocapitalize="characters"></div>
+      ${S.codeMsg ? `<p class="msg" role="alert">${esc(S.codeMsg)}</p>` : ''}
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>들어가기</button>
+    </form><button class="btn btn-ghost" data-act="signOut">로그아웃</button></div>`;
+}
+function nicknameHtml(){
+  return heroHtml(true, false) + `<div class="auth pad">
+    <p class="lead">함께 기도하고 성경을 읽을 때 보일 <b>별명</b>을 정해주세요. 나중에 언제든 바꿀 수 있어요.</p>
+    <form data-form="firstNick">
+      <div class="field"><label class="label" for="first-nick">별명</label><input id="first-nick" type="text" required maxlength="12" placeholder="예: 은혜로운양" autocomplete="nickname"></div>
+      ${S.authMsg ? `<p class="msg" role="alert">${esc(S.authMsg.text)}</p>` : ''}
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>시작하기</button>
+    </form><button class="btn btn-ghost" data-act="signOut">다른 계정으로 로그인</button></div>`;
+}
+
+/* ─── 시트 ─── */
+function composeEnds(c){ return c.days === 'date' ? (c.date ? new Date(c.date+'T23:59:59+09:00') : null) : new Date(Date.now() + c.days*DAY); }
+function sheetHtml(){
+  if(!S.sheet) return '';
+  let body = '';
+  const t = S.sheet.type;
+  if(t === 'compose'){
+    const c = S.draft.compose, ends = composeEnds(c);
+    const opt = (v,l) => `<button type="button" class="chip ${c.days===v?'on':''}" data-act="composeDays" data-v="${v}" aria-pressed="${c.days===v}">${l}</button>`;
+    body = `<div class="sheet-head"><div><h2>기도제목 나누기</h2><span class="hint">${esc(curGroup()?.name || '')}에 나눠요</span></div><button class="icon-btn" data-act="close" aria-label="닫기">${I.x(22)}</button></div>
+      <div class="field"><label class="label" for="compose-text">기도제목</label><textarea id="compose-text" maxlength="500" data-model="compose.text" placeholder="함께 기도해 주었으면 하는 내용을 적어주세요">${esc(c.text)}</textarea></div>
+      <fieldset class="field"><legend class="label" style="margin-bottom:8px">어떻게 보일까요?</legend><div class="choice-grid">
+        <button type="button" class="choice ${!c.anon?'on':''}" data-act="composeAnon" data-v="0" aria-pressed="${!c.anon}"><small>별명으로</small><strong>${esc(S.profile.nickname)}</strong></button>
+        <button type="button" class="choice ${c.anon?'on':''}" data-act="composeAnon" data-v="1" aria-pressed="${c.anon}"><small>이름 숨기기</small><strong>익명</strong></button></div></fieldset>
+      <fieldset class="field"><legend class="label" style="margin-bottom:8px">얼마 동안 기도가 필요한가요?</legend>
+        <div class="chips" style="flex-wrap:wrap;padding:0">${opt(3,'3일')}${opt(7,'1주')}${opt(14,'2주')}${opt(30,'1달')}<button type="button" class="chip ${c.days==='date'?'on':''}" data-act="composeDays" data-v="date" aria-pressed="${c.days==='date'}">${I.cal(16)}날짜 선택</button></div>
+        ${c.days==='date' ? calHtml('compose', c.date, kstDate(Date.now()), null) : ''}
+        ${ends ? `<div class="note">${I.clock(18)}<span><b>${md(kstDate(ends))} (${weekday(kstDate(ends))})</b>까지 함께 기도해요</span></div>` : (c.days==='date' ? '<span class="hint">달력에서 마지막 날을 골라주세요</span>' : '')}
+      </fieldset>
+      <button class="btn btn-accent btn-block" data-act="submitCompose" ${S.busy?'disabled':''}>나누기</button>`;
+  } else if(t === 'answer'){
+    const a = S.draft.answer, p = S.prayers.find(x => x.id === a.id);
+    if(!p) return '';
+    const choice = k => `<button type="button" class="choice ${a.answer===k?'on':''}" data-act="pickAnswer" data-v="${k}" aria-pressed="${a.answer===k}"><strong>${ANSWERS[k][0]}</strong><small>${ANSWERS[k][1]}</small></button>`;
+    body = `<div class="sheet-head"><h2>응답 기록</h2><button class="icon-btn" data-act="close" aria-label="닫기">${I.x(22)}</button></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span class="time">${ddayPill(p.ends_at)} 함께 기도 ${p.mark_count}회</span><p class="content" style="font-weight:700">${esc(p.content)}</p></div>
+      <fieldset class="field"><legend class="label" style="margin-bottom:8px">어떻게 응답받으셨나요?</legend><div class="choice-grid">
+        ${ARCHIVED.map(choice).join('')}
+        <button type="button" class="choice wide ${a.answer==='NONE'?'on':''}" data-act="pickAnswer" data-v="NONE" aria-pressed="${a.answer==='NONE'}"><strong style="font-size:14px">선택 안 함</strong><small>보관함에 담지 않고 마무리해요</small></button></div></fieldset>
+      <div class="field"><label class="label" for="answer-comment">한마디 남기기 (선택)</label><textarea id="answer-comment" maxlength="300" style="min-height:90px" data-model="answer.comment" placeholder="어떻게 응답받았는지 나눠주세요">${esc(a.comment)}</textarea></div>
+      ${a.answer !== 'NONE' ? `<label class="switchrow"><span><b>응답 보관함에 공개</b><small>끄면 나만 볼 수 있어요</small></span><input class="sw" type="checkbox" id="answer-public" data-model="answer.public" ${a.public?'checked':''}></label>` : ''}
+      <button class="btn btn-accent btn-block" data-act="submitAnswer" ${S.busy?'disabled':''}>응답 기록하기</button>
+      ${p.answer ? `<button class="btn btn-ghost" data-act="clearAnswer">응답 기록 지우기</button>` : ''}`;
+  } else if(t === 'servers'){
+    body = `<div class="sheet-head"><h2>서버 바꾸기</h2><button class="icon-btn" data-act="close" aria-label="닫기">${I.x(22)}</button></div>
+      <div class="menu">${S.groups.map(g => `<button class="menu-row" data-act="switchGroup" data-id="${g.id}" aria-pressed="${g.id===S.groupId}"><span>${esc(g.name)}<small class="hint" style="display:block">멤버 ${g.member_count}명${g.my_role==='admin' ? ' · 관리자' : (!g.my_role ? ' · 총 관리자로 보기' : '')}</small></span><span class="val" style="color:var(--accent)">${g.id===S.groupId ? I.check(20) : ''}</span></button>`).join('')}</div>
+      <div class="field"><span class="label">다른 서버에 들어가기</span><form class="inline" data-form="join"><input id="join-code" type="text" class="code-input" maxlength="12" placeholder="입장 코드" aria-label="입장 코드" autocomplete="off" autocapitalize="characters"><button class="btn btn-accent" type="submit">들어가기</button></form></div>`;
+  } else if(t === 'confirm'){
+    body = `<div class="sheet-head"><h2>${S.sheet.title}</h2></div><p class="lead">${S.sheet.text}</p>
+      <div class="btn-row"><button class="btn btn-ghost btn-block" data-act="close">취소</button><button class="btn btn-danger btn-block" data-act="confirmYes" ${S.busy?'disabled':''}>${S.sheet.yes}</button></div>`;
+  }
+  return `<div class="scrim" data-act="close"><div class="sheet pad" role="dialog" aria-modal="true" data-act="noop"><span class="grabber"></span>${body}</div></div>`;
+}
+function askConfirm(title, text, yes, run){ S.sheet = {type:'confirm', title, text, yes, run}; render(); }
+
+/* ─── 렌더 ─── */
+function render(){
+  const app = document.getElementById('app');
+  let html;
+  if(S.fatal) html = heroHtml(true,false) + `<div class="auth pad"><p class="msg" role="alert">${esc(S.fatal)}</p><button class="btn btn-strong" data-act="retry">다시 시도</button></div>`;
+  else if(!S.ready) html = heroHtml(true,false) + `<p class="empty">불러오는 중…</p>`;
+  else if(!S.session) html = authHtml();
+  else if(!S.profile) html = heroHtml(true,false) + `<p class="empty">프로필을 불러오지 못했어요.</p>`;
+  else if(!S.profile.nickname) html = nicknameHtml();
+  else if(!isSuper() && !curGroup()) html = codeHtml();
+  else html = ({pray:prayHtml, bible:bibleHtml, answers:answersHtml, me:meHtml}[S.tab])() + navHtml();
+  app.innerHTML = html + sheetHtml();
+  document.body.style.overflow = S.sheet ? 'hidden' : '';
+}
+
+let toastTimer;
+function toast(text){ const t = document.getElementById('toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
+
+function errMsg(e){
+  const m = (e && (e.message || e.error_description)) || '';
+  if(e && e.code === '23505') return '이미 다른 분이 쓰고 있는 별명이에요. 다른 별명을 정해주세요.';
+  if(m.includes('TOO_SOON')) return '같은 기도제목은 1시간에 한 번 체크할 수 있어요.';
+  if(m.includes('PRAYER_CLOSED')) return '기도 기간이 끝난 기도제목이에요.';
+  if(m.includes('BAD_CODE')) return '이 코드로 들어갈 수 있는 서버가 없어요. 코드를 다시 확인해 주세요.';
+  if(m.includes('NOT_MEMBER')) return '이 서버의 멤버가 아니에요. 입장 코드로 다시 들어와 주세요.';
+  if(m.includes('NOT_ALLOWED') || m.includes('row-level security')) return '이 작업을 할 권한이 없어요.';
+  if(m.includes('Invalid login')) return '이메일이나 비밀번호가 맞지 않아요.';
+  if(m.includes('already registered')) return '이미 가입된 이메일이에요. 로그인해 주세요.';
+  if(m.includes('Email not confirmed')) return '메일함에서 확인 링크를 먼저 눌러주세요.';
+  if(m.includes('Password should be')) return '비밀번호는 6자 이상으로 정해주세요.';
+  if(m.includes('rate limit')) return '요청이 너무 많아요. 잠시 후 다시 해 주세요.';
+  if(m.includes('Failed to fetch') || m.includes('NetworkError')) return '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.';
+  return m || '문제가 생겼어요. 잠시 후 다시 해 주세요.';
+}
+
+/* ─── 데이터 흐름 ─── */
+function pickGroup(){
+  if(!S.groups.some(g => g.id === S.groupId)){
+    const g = S.groups.find(x => x.my_role) || S.groups[0];
+    S.groupId = g ? g.id : null;
+  }
+  lsSet('groupId', S.groupId || '');
+}
+async function loadGroups(){
+  if(isSuper()){ S.groups = (await API.loadGroups()) || []; pickGroup(); return; }
+  let info = null;
+  if(S.groupId){ try{ info = await API.groupInfo(S.groupId); }catch(e){ info = null; } }
+  S.groups = info ? [info] : [];
+  if(!info){ S.groupId = null; lsSet('groupId', ''); }
+}
+async function loadGroupData(retry = true){
+  const g = S.groupId;
+  if(!g){ S.prayers = []; S.board = []; S.todayReaders = 0; return; }
+  try{
+    const [p,b,t] = await Promise.all([API.loadPrayers(g), API.loadBoard(g), API.todayReaders(g)]);
+    if(g !== S.groupId) return;
+    S.prayers = p || []; S.board = b || []; S.todayReaders = Number(t) || 0;
+  }catch(e){
+    if(retry && String(e?.message||'').includes('NOT_MEMBER')){ await loadGroups(); return loadGroupData(false); }
+    throw e;
+  }
+}
+async function boot(){
+  if(!S.session){ S.profile = null; S.ready = true; render(); return; }
+  try{
+    const [profile, readings] = await Promise.all([API.loadProfile(), API.loadReadings()]);
+    S.profile = profile; S.readings = readings || [];
+    if(S.pendingCode){ const c = S.pendingCode; S.pendingCode = null; try{ S.groupId = await API.joinGroup(c); lsSet('groupId', S.groupId); S.codeMsg = null; }catch(e){ S.codeMsg = errMsg(e); } }
+    await loadGroups(); await loadGroupData();
+  }catch(e){ toast(errMsg(e)); }
+  S.ready = true; render();
+}
+async function start(){
+  if(S.theme !== 'system') applyTheme();
+  render();
+  try{ await API.init(); S.fatal = ''; }
+  catch(e){ S.fatal = errMsg(e); S.ready = true; render(); return; }
+  await boot();
+}
+function applyTheme(){ const r = document.documentElement; if(S.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); }
+async function guard(fn){ if(S.busy) return; S.busy = true; try{ await fn(); }catch(e){ toast(errMsg(e)); }finally{ S.busy = false; render(); } }
+async function switchTo(id){ S.groupId = id; lsSet('groupId', id); S.prayers = []; S.board = []; S.todayReaders = 0; S.prayTab = 'active'; await loadGroupData(); }
+
+/* ─── 동작 ─── */
+const ACT = {
+  noop(){},
+  retry(){ S.fatal = ''; S.ready = false; start(); },
+  tab(d){ S.tab = d.tab; S.sheet = null; S.page = null; S.cal = null; S.fixMode = false; S.sel.clear(); render(); window.scrollTo(0,0); loadGroupData().then(render).catch(()=>{}); },
+  prayTab(d){ S.prayTab = d.v; render(); },
+  refresh(){ guard(async () => { await loadGroups(); await loadGroupData(); toast('새로 불러왔어요'); }); },
+  async demoReset(){ if(!IS_DEMO) return; await API.reset(); S.sel.clear(); S.sheet = null; S.page = null; S.draft = {}; S.groupId = null; S.ready = false; await boot(); toast('체험 데이터를 처음 상태로 되돌렸어요'); },
+  openServers(){ S.sheet = {type:'servers'}; render(); },
+  switchGroup(d){ guard(async () => { S.sheet = null; await switchTo(d.id); toast(`${curGroup()?.name || ''}(으)로 바꿨어요`); }); },
+  goAdmin(){ S.tab = 'me'; S.page = 'admin'; render(); window.scrollTo(0,0); },
+  async mark(d){
+    const p = S.prayers.find(x => x.id == d.id); if(!p) return;
+    const prev = {...p}; p.my_last_mark = new Date().toISOString(); p.mark_count = Number(p.mark_count) + 1; p.my_mark_count = Number(p.my_mark_count || 0) + 1; render();
+    try{ await API.markPrayer(p.id); toast('함께 기도했어요 · 1시간 뒤에 다시 체크할 수 있어요'); }
+    catch(e){ Object.assign(p, prev); render(); toast(errMsg(e)); }
+  },
+  compose(){ if(!S.draft.compose) S.draft.compose = {text:'', anon:!!S.profile.prayer_anon_default, days:7, date:''}; S.cal = null; S.sheet = {type:'compose'}; render(); setTimeout(() => document.getElementById('compose-text')?.focus(), 50); },
+  composeAnon(d){ S.draft.compose.anon = d.v === '1'; render(); },
+  composeDays(d){ S.draft.compose.days = d.v === 'date' ? 'date' : Number(d.v); render(); },
+  calNav(d){ const [y,m] = S.cal.month.split('-').map(Number); const dt = new Date(Date.UTC(y, m-1+Number(d.v), 1)); S.cal.month = dt.toISOString().slice(0,7); render(); },
+  calPick(d){
+    const t = S.cal.target;
+    if(t === 'compose') S.draft.compose.date = d.v;
+    else if(t === 'planStart'){ S.draft.plan.start = d.v; S.cal = null; }
+    else if(t === 'planEnd'){ S.draft.plan.end = d.v; S.cal = null; }
+    render();
+  },
+  openCal(d){ const open = !(S.cal && S.cal.target === d.v); S.cal = open ? {target:d.v, month:(d.v==='planStart' ? S.draft.plan.start : S.draft.plan.end).slice(0,7)} : null; render(); },
+  submitCompose(){
+    const c = S.draft.compose, text = c.text.trim(), ends = composeEnds(c);
+    if(!text){ toast('기도제목을 적어주세요'); return; }
+    if(!ends || ends <= Date.now()){ toast('마감 날짜를 골라주세요'); return; }
+    guard(async () => {
+      await API.createPrayer({content:text, is_anonymous:c.anon, ends_at:ends.toISOString(), group_id:S.groupId});
+      S.draft.compose = null; S.sheet = null; S.prayTab = 'active';
+      await loadGroupData(); toast('기도제목을 나눴어요'); window.scrollTo(0,0);
+    });
+  },
+  openAnswer(d){
+    const p = S.prayers.find(x => x.id == d.id); if(!p) return;
+    S.draft.answer = {id:p.id, answer:p.answer, comment:p.answer_comment || '', public: p.answer ? p.answer_public : !!S.profile.answer_public_default};
+    S.sheet = {type:'answer'}; render();
+  },
+  pickAnswer(d){ S.draft.answer.answer = d.v; render(); },
+  submitAnswer(){
+    const a = S.draft.answer;
+    if(!a.answer){ toast('응답을 하나 골라주세요'); return; }
+    guard(async () => {
+      await API.answerPrayer(a.id, {answer:a.answer, answer_comment:a.comment.trim() || null, answer_public: a.answer === 'NONE' ? false : !!a.public});
+      S.sheet = null; await loadGroupData();
+      toast(a.answer === 'NONE' ? '기도제목을 마무리했어요' : (a.public ? '응답 보관함에 담았어요' : '응답 보관함에 나만 보기로 담았어요'));
+    });
+  },
+  clearAnswer(){ const a = S.draft.answer; guard(async () => { await API.answerPrayer(a.id, {answer:null, answer_comment:null}); S.sheet = null; await loadGroupData(); toast('응답 기록을 지웠어요'); }); },
+  togglePublic(d){ const p = S.prayers.find(x => x.id == d.id); if(!p) return; guard(async () => { await API.setAnswerPublic(p.id, !p.answer_public); await loadGroupData(); toast(p.answer_public ? '나만 보기로 바꿨어요' : '보관함에 공개했어요'); }); },
+  askDelete(d){ const id = Number(d.id); askConfirm('이 기도제목을 지울까요?', '함께 기도한 기록과 응답도 같이 지워지고, 되돌릴 수 없어요.', '지우기', async () => { await API.deletePrayer(id); await loadGroupData(); toast('기도제목을 지웠어요'); }); },
+  askModDelete(d){ const id = Number(d.id); askConfirm('관리자 권한으로 지울까요?', '이 기도제목과 함께 기도한 기록이 모두 지워지고, 되돌릴 수 없어요.', '지우기', async () => { await API.modDelete(id); await loadGroupData(); toast('관리자 권한으로 지웠어요'); }); },
+  confirmYes(){ const run = S.sheet?.run; if(!run) return; guard(async () => { await run(); S.sheet = null; }); },
+  close(){ S.sheet = null; render(); },
+  bibleView(d){ S.bibleView = d.v; render(); if(d.v === 'stats') loadGroupData().then(render).catch(()=>{}); },
+  testament(d){ S.testament = d.v; S.bookId = null; render(); },
+  book(d){ S.bookId = Number(d.v); render(); },
+  ch(d){ if(Date.now() < suppressClickUntil) return; S.sel.has(d.k) ? S.sel.delete(d.k) : S.sel.add(d.k); render(); },
+  clearSel(){ S.sel.clear(); render(); },
+  toggleFix(){ S.fixMode = !S.fixMode; S.sel.clear(); render(); },
+  confirmUnread(){
+    const ids = [...S.sel].map(k => {
+      const [b,c] = k.split('-').map(Number);
+      return S.readings.filter(r => r.book === b && r.chapter === c).reduce((best, r) => (best == null || Number(r.id) > Number(best.id)) ? r : best, null)?.id;
+    }).filter(id => id != null);
+    if(!ids.length){ S.sel.clear(); render(); return; }
+    guard(async () => { await API.deleteReadings(ids); S.sel.clear(); S.fixMode = false; S.readings = await API.loadReadings(); await loadGroupData(); toast(`${ids.length}장의 읽은 기록을 지웠어요`); });
+  },
+  confirmRead(){
+    const list = [...S.sel].map(k => { const [book,chapter] = k.split('-').map(Number); return {book, chapter}; });
+    guard(async () => { await API.addReadings(list); const n = list.length; S.sel.clear(); S.readings = await API.loadReadings(); await loadGroupData(); toast(`${md(appToday())}, ${n}장 등록했어요`); });
+  },
+  ansScope(d){ S.ansScope = d.v; render(); },
+  page(d){
+    S.page = d.v; S.cal = null;
+    if(d.v === 'nick') S.draft.nick = S.profile.nickname;
+    if(d.v === 'plan') S.draft.plan = null;
+    render(); window.scrollTo(0,0);
+  },
+  back(){ S.page = null; S.cal = null; render(); window.scrollTo(0,0); },
+  backAdmin(){ S.page = 'admin'; render(); window.scrollTo(0,0); },
+  adminGroup(d){ S.adminGroupId = d.id; S.members = []; S.page = 'adminGroup'; render(); window.scrollTo(0,0); guard(async () => { S.members = await API.listMembers(d.id) || []; }); },
+  setRole(d){ guard(async () => { await API.setRole(S.adminGroupId, d.id, d.v); S.members = await API.listMembers(S.adminGroupId); await loadGroups(); toast(d.v === 'admin' ? '서버 관리자로 임명했어요' : '관리자에서 해제했어요'); }); },
+  askKick(d){
+    const m = S.members.find(x => x.user_id === d.id), g = S.adminGroupId;
+    askConfirm(`${esc(m?.nickname || '이 멤버')}님을 내보낼까요?`, '이 서버의 기도제목을 더 볼 수 없어요. 입장 코드를 알면 다시 들어올 수 있으니, 필요하면 새 코드를 만들어 주세요.', '내보내기',
+      async () => { await API.removeMember(g, d.id); S.members = await API.listMembers(g); await loadGroups(); toast('내보냈어요'); });
+  },
+  askRegen(){ const g = S.adminGroupId; askConfirm('새 입장 코드를 만들까요?', '지금 코드로는 더 이상 들어올 수 없어요. 이미 들어온 멤버는 그대로예요.', '새 코드 만들기', async () => { await API.regenCode(g); await loadGroups(); toast('새 입장 코드를 만들었어요'); }); },
+  askDeleteGroup(){
+    const g = S.groups.find(x => x.id === S.adminGroupId);
+    askConfirm(`'${esc(g?.name)}' 서버를 지울까요?`, '이 서버의 기도제목, 응답, 멤버 목록이 모두 지워지고 되돌릴 수 없어요. 성경 읽기 기록은 각자 그대로 남아요.', '서버 삭제',
+      async () => { await API.deleteGroup(g.id); await loadGroups(); await loadGroupData(); S.page = 'admin'; toast('서버를 지웠어요'); });
+  },
+  askLeave(d){
+    const g = S.groups.find(x => x.id === d.id);
+    askConfirm(`'${esc(g?.name)}'에서 나갈까요?`, '내가 쓴 기도제목은 남아 있어요. 입장 코드로 다시 들어올 수 있어요.', '나가기',
+      async () => { await API.leaveGroup(d.id); await loadGroups(); await loadGroupData(); toast('서버에서 나왔어요'); });
+  },
+  copyCode(d){
+    const done = () => toast(`입장 코드 ${d.v}를 복사했어요`);
+    try{ navigator.clipboard.writeText(d.v).then(done, () => toast(`입장 코드: ${d.v}`)); }catch(e){ toast(`입장 코드: ${d.v}`); }
+  },
+  planScope(d){ S.draft.plan.scope = d.v; render(); },
+  planTimes(d){ S.draft.plan.times = Math.min(10, Math.max(1, S.draft.plan.times + Number(d.v))); render(); },
+  savePlan(){
+    const d = S.draft.plan;
+    if(!d.start || !d.end || d.end < d.start){ toast('종료일이 시작일보다 늦어야 해요'); return; }
+    guard(async () => { S.profile = await API.updateProfile({plan_start:d.start, plan_end:d.end, plan_scope:d.scope, plan_times:d.times}); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
+  },
+  prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
+  prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
+  theme(d){ S.theme = d.v; lsSet('theme', d.v); applyTheme(); render(); },
+  authMode(d){ S.authMode = d.v; S.authMsg = null; render(); },
+  signOut(){ guard(async () => { await API.signOut(); S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.tab = 'pray'; S.page = null; S.sel.clear(); S.authMsg = null; S.codeMsg = null; }); },
+  async demoRole(){ if(!IS_DEMO) return; await API.setSuper(!isSuper()); S.page = null; S.sheet = null; S.ready = false; render(); await boot(); toast(isSuper() ? '총 관리자 화면으로 바꿨어요' : '서버 관리자 화면으로 바꿨어요'); },
+};
+const FORMS = {
+  auth(){
+    const email = document.getElementById('auth-email').value.trim(), pw = document.getElementById('auth-pw').value;
+    S.pendingCode = (document.getElementById('auth-code')?.value || '').trim() || null; S.codeMsg = null;
+    const signup = S.authMode === 'signup';
+    S.authMsg = null;
+    guard(async () => {
+      try{
+        const data = signup ? await API.signUp(email, pw) : await API.signIn(email, pw);
+        if(data?.session){ S.session = data.session; S.ready = false; render(); await boot(); }
+        else if(signup) S.authMsg = {ok:true, text:'확인 메일을 보냈어요. 메일의 링크를 누른 뒤 여기서 로그인해 주세요.'};
+      }catch(e){ S.authMsg = {text:errMsg(e)}; }
+    });
+  },
+  firstNick(){
+    const v = document.getElementById('first-nick').value.trim();
+    if(v.length < 2){ S.authMsg = {text:'별명은 2자 이상으로 정해주세요.'}; render(); return; }
+    S.authMsg = null;
+    guard(async () => { try{ S.profile = await API.updateProfile({nickname:v}); await loadGroupData(); }catch(e){ S.authMsg = {text:errMsg(e)}; } });
+  },
+  nickname(){
+    const v = (S.draft.nick || '').trim();
+    if(v.length < 2){ toast('별명은 2자 이상으로 정해주세요'); return; }
+    if(v === S.profile.nickname){ S.page = null; render(); return; }
+    guard(async () => { S.profile = await API.updateProfile({nickname:v}); S.page = null; await loadGroupData(); toast(`이제 '${v}'(으)로 보여요`); });
+  },
+  join(){
+    const code = (document.getElementById('join-code')?.value || '').trim();
+    if(!code){ toast('입장 코드를 입력해 주세요'); return; }
+    guard(async () => {
+      try{
+        const id = await API.joinGroup(code); S.groupId = id; lsSet('groupId', id);
+        await loadGroups(); S.sheet = null; S.codeMsg = null; await switchTo(id); S.tab = 'pray'; S.page = null; toast(`${curGroup()?.name || '서버'}에 들어왔어요`);
+      }catch(e){ S.codeMsg = errMsg(e); if(curGroup()) toast(S.codeMsg); }
+    });
+  },
+  createGroup(){
+    const name = (document.getElementById('new-group')?.value || '').trim();
+    if(!name){ toast('서버 이름을 적어주세요'); return; }
+    guard(async () => { const id = await API.createGroup(name); await loadGroups(); if(!S.groupId || !curGroup()?.my_role) await switchTo(id); S.adminGroupId = id; S.page = 'adminGroup'; S.members = await API.listMembers(id) || []; toast(`'${name}' 서버를 만들었어요`); });
+  },
+  renameGroup(){
+    const name = (document.getElementById('rename-group')?.value || '').trim();
+    if(!name){ toast('서버 이름을 적어주세요'); return; }
+    guard(async () => { await API.renameGroup(S.adminGroupId, name); await loadGroups(); toast('서버 이름을 바꿨어요'); });
+  },
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if(!el || el.disabled) return;
+  const fn = ACT[el.dataset.act]; if(!fn) return;
+  if(el.type === 'checkbox'){ fn(el.dataset, el); return; }
+  if(el.dataset.act === 'noop') return;
+  e.preventDefault(); fn(el.dataset, el);
+});
+function setModel(path, v){ const [o,k] = path.split('.'); if(k === undefined) S.draft[o] = v; else if(S.draft[o]) S.draft[o][k] = v; }
+document.addEventListener('input', e => { const m = e.target.dataset?.model; if(m && e.target.type !== 'checkbox') setModel(m, e.target.value); });
+document.addEventListener('change', e => { const el = e.target, m = el.dataset?.model; if(!m) return; setModel(m, el.type === 'checkbox' ? el.checked : el.value); });
+document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.dataset.form]?.(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
+setInterval(() => { const a = document.activeElement; if(S.ready && S.session && S.tab === 'pray' && !S.sheet && !(a && /INPUT|TEXTAREA/.test(a.tagName))) render(); }, 30000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.session && S.profile && !S.sheet) loadGroupData().then(render).catch(()=>{}); });
+
+/* ─── 성경 장 드래그 선택 ─── */
+let drag = null, press = null, suppressClickUntil = 0;
+const cellAt = (x,y) => document.elementFromPoint(x,y)?.closest?.('.grid .ch');
+function dragApply(el){
+  const k = el?.dataset.k; if(!k || el.disabled || drag.seen.has(k)) return;
+  drag.seen.add(k);
+  drag.mode ? S.sel.add(k) : S.sel.delete(k);
+  el.classList.toggle(S.fixMode ? 'del' : 'sel', drag.mode); el.setAttribute('aria-pressed', String(drag.mode));
+}
+function dragStart(el){ drag = {mode: !S.sel.has(el.dataset.k), seen: new Set()}; dragApply(el); try{ navigator.vibrate?.(10); }catch(e){} }
+function dragEnd(){ if(press?.timer) clearTimeout(press.timer); press = null; if(!drag) return; drag = null; suppressClickUntil = Date.now() + 500; render(); }
+document.addEventListener('touchstart', e => {
+  const el = e.target.closest?.('.grid .ch'); if(!el || el.disabled || e.touches.length > 1) return;
+  const t = e.touches[0];
+  press = {el, x:t.clientX, y:t.clientY, timer: setTimeout(() => { if(press) dragStart(press.el); }, 220)};
+}, {passive:true});
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if(drag){ e.preventDefault(); dragApply(cellAt(t.clientX, t.clientY)); return; }
+  if(press && Math.hypot(t.clientX - press.x, t.clientY - press.y) > 8){ clearTimeout(press.timer); press = null; }
+}, {passive:false});
+document.addEventListener('touchend', dragEnd);
+document.addEventListener('touchcancel', dragEnd);
+document.addEventListener('pointerdown', e => {
+  if(e.pointerType !== 'mouse' || e.button !== 0) return;
+  const el = e.target.closest?.('.grid .ch'); if(el && !el.disabled) press = {el};
+});
+document.addEventListener('pointermove', e => {
+  if(e.pointerType !== 'mouse' || !press) return;
+  const c = cellAt(e.clientX, e.clientY);
+  if(!drag){ if(c && c !== press.el){ dragStart(press.el); dragApply(c); } return; }
+  dragApply(c);
+});
+document.addEventListener('pointerup', e => { if(e.pointerType === 'mouse') dragEnd(); });
+
+start();
+</script>
+
+</body>
+</html>
