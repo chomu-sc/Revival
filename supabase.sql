@@ -527,3 +527,56 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.my_last_group() from public, anon;
 grant execute on function public.my_last_group() to authenticated;
+
+-- ─── 문의하기 ───
+create table if not exists public.inquiries (
+  id bigint generated always as identity primary key,
+  user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  group_id uuid references public.groups(id) on delete set null,
+  content text not null check (char_length(trim(content)) between 1 and 1000),
+  created_at timestamptz not null default now(),
+  reply text check (reply is null or char_length(reply) <= 1000),
+  replied_at timestamptz,
+  reply_seen boolean not null default false
+);
+create index if not exists inquiries_user_idx on public.inquiries (user_id, created_at desc);
+alter table public.inquiries enable row level security;
+drop policy if exists "inquiries: read own" on public.inquiries;
+create policy "inquiries: read own" on public.inquiries for select to authenticated using (user_id = auth.uid());
+drop policy if exists "inquiries: insert own" on public.inquiries;
+create policy "inquiries: insert own" on public.inquiries for insert to authenticated
+  with check (user_id = auth.uid() and (group_id is null or public.can_view_group(group_id)));
+revoke update, delete on public.inquiries from authenticated, anon;
+
+create or replace function public.admin_inquiries()
+returns table (id bigint, nickname text, email text, group_name text, content text, created_at timestamptz, reply text, replied_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_super_admin() then raise exception 'NOT_ALLOWED'; end if;
+  return query
+    select q.id, p.nickname, u.email::text, g.name, q.content, q.created_at, q.reply, q.replied_at
+    from inquiries q join profiles p on p.id = q.user_id join auth.users u on u.id = q.user_id
+    left join groups g on g.id = q.group_id
+    order by (q.reply is null) desc, q.created_at desc
+    limit 500;
+end $$;
+
+create or replace function public.reply_inquiry(p_id bigint, p_reply text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_super_admin() then raise exception 'NOT_ALLOWED'; end if;
+  update inquiries set reply = nullif(trim(p_reply), ''), replied_at = case when nullif(trim(p_reply), '') is null then null else now() end, reply_seen = false
+  where id = p_id;
+end $$;
+
+create or replace function public.mark_inquiries_seen() returns void
+language sql security definer set search_path = public as $$
+  update inquiries set reply_seen = true where user_id = auth.uid() and reply is not null and not reply_seen
+$$;
+
+revoke all on function public.admin_inquiries() from public, anon;
+revoke all on function public.reply_inquiry(bigint, text) from public, anon;
+revoke all on function public.mark_inquiries_seen() from public, anon;
+grant execute on function public.admin_inquiries() to authenticated;
+grant execute on function public.reply_inquiry(bigint, text) to authenticated;
+grant execute on function public.mark_inquiries_seen() to authenticated;
