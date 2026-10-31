@@ -339,7 +339,7 @@ function computeProgress(profile, readings){
 /* ─── 상태 ─── */
 const S = {
   ready:false, fatal:'', session:null, profile:null, groups:[], groupId: lsGet('groupId') || null,
-  prayers:[], readings:[], board:[], todayReaders:0, inquiries:[], inbox:[],
+  prayers:[], readings:[], board:[], todayReaders:0, inbox:[],
   tab:'pray', page:null, adminGroupId:null, members:[], prayTab:'active', bibleView:'check', testament:null, bookId:null, sel:new Set(), ansScope:'all',
   sheet:null, cal:null, authMode:'login', authMsg:null, busy:false, theme: lsGet('theme') || 'system', fontScale: lsGet('fontScale') || 'md', draft:{}
 };
@@ -403,11 +403,8 @@ function supabaseApi(){
     addReadings: list => sb.from('readings').insert(list).then(chk),
     deleteReadings: ids => sb.from('readings').delete().in('id', ids).then(chk),
     loadBoard: g => rpc('reading_board', {p_group:g}),
-    loadInquiries: () => sb.from('inquiries').select('id,content,created_at,reply,replied_at,reply_seen').order('created_at', {ascending:false}).then(chk),
     sendInquiry: o => sb.from('inquiries').insert(o).then(chk),
-    markInquiriesSeen: () => rpc('mark_inquiries_seen'),
     adminInquiries: () => rpc('admin_inquiries'),
-    replyInquiry: (id, reply) => rpc('reply_inquiry', {p_id:id, p_reply:reply}),
     todayReaders: g => rpc('group_today_readers', {p_group:g}),
   };
 }
@@ -449,7 +446,7 @@ function demoApi(){
     ];
     const inquiries = [
       {id:1, user_id:'u2', group_id:'g1', content:'기도제목을 쓴 뒤에 내용을 고칠 수 있으면 좋겠어요.', created_at:iso(now-5*HOUR), reply:null, replied_at:null, reply_seen:false},
-      {id:2, user_id:ME, group_id:'g1', content:'성경 읽은 기록을 지난 날짜로도 넣을 수 있나요?', created_at:iso(now-3*DAY), reply:'지금은 오늘 날짜로만 기록돼요. 많이 필요하시면 기능을 더해볼게요!', replied_at:iso(now-2*DAY), reply_seen:false},
+      {id:2, user_id:'u1', group_id:'g2', content:'성경 읽은 기록을 지난 날짜로도 넣을 수 있나요?', created_at:iso(now-3*DAY)},
     ];
     return {v:2, session:true, profile, readings, prayers, marks:[], users, groups, members, inquiries};
   }
@@ -519,11 +516,8 @@ function demoApi(){
       const today = appToday();
       return db.members.filter(m => m.group_id === g && (m.user_id === ME ? db.readings.some(r => r.read_on === today) : db.users[m.user_id].today)).length;
     },
-    async loadInquiries(){ db.inquiries = db.inquiries || []; return db.inquiries.filter(q => q.user_id === ME).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
-    async sendInquiry(o){ db.inquiries = db.inquiries || []; db.inquiries.push({id:Date.now(), user_id:ME, created_at:new Date().toISOString(), reply:null, replied_at:null, reply_seen:false, ...o}); save(); },
-    async markInquiriesSeen(){ (db.inquiries||[]).forEach(q => { if(q.user_id === ME && q.reply) q.reply_seen = true; }); save(); },
-    async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at, reply:q.reply, replied_at:q.replied_at})).sort((a,b) => (!a.reply - !b.reply) * -1 || new Date(b.created_at) - new Date(a.created_at)); },
-    async replyInquiry(id, reply){ if(!db.profile.is_super_admin) deny(); const q = db.inquiries.find(x => x.id === id); if(q){ q.reply = reply.trim() || null; q.replied_at = q.reply ? new Date().toISOString() : null; q.reply_seen = false; } save(); },
+    async sendInquiry(o){ db.inquiries = db.inquiries || []; db.inquiries.push({id:Date.now(), user_id:ME, created_at:new Date().toISOString(), ...o}); save(); },
+    async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at})).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
     async reset(){ db = seed(); save(); S.session = sess(); }
   };
 }
@@ -585,7 +579,7 @@ const demoBar = () => {
 
 function navHtml(){
   const t = [['pray','기도',I.hands(22)],['bible','성경',I.book(22)],['answers','응답',I.box(22)],['me','내 정보',I.user(22)]];
-  const dot = S.inquiries.some(q => q.reply && !q.reply_seen) || S.inbox.some(q => !q.reply);
+  const dot = isSuper() && unseenInquiries() > 0;
   return `<nav class="nav" aria-label="메뉴">${t.map(([k,l,svg]) => `<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}><span class="nav-ic">${svg}${k==='me' && dot ? '<i class="nav-dot" aria-label="새 소식"></i>' : ''}</span>${l}</button>`).join('')}</nav>`;
 }
 function roleBadge(g = curGroup()){
@@ -801,8 +795,7 @@ function meHtml(){
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
-  const newReplies = S.inquiries.filter(q => q.reply && !q.reply_seen).length;
-  const unanswered = S.inbox.filter(q => !q.reply).length;
+  const unseen = unseenInquiries();
   const adminSection = isSuper() ? menuRow('page',`${I.shield(16)} 서버 관리`,'총 관리자','data-v="admin"')
     : (g?.my_role === 'admin' ? menuRow('adminGroup',`${I.shield(16)} 이 서버 관리`,'서버 관리자',`data-id="${g.id}"`) : '');
   return `<div class="topbar pad"><div><h1>내 정보</h1><span class="hint">${esc(S.session?.user?.email || '')}</span></div></div>` + demoBar() +
@@ -813,33 +806,26 @@ function meHtml(){
     <section class="group"><h2>설정</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${(FONT_SCALES[S.fontScale]||FONT_SCALES.md)[0]}`,'data-v="theme"')}</div></section>
-    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','문의하기', newReplies ? `<span class="pill">새 답변 ${newReplies}</span>` : '', 'data-v="inquiry"')}</div></section>
-    ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unanswered ? `<span class="pill warn">답변 대기 ${unanswered}</span>` : '모두 답변함', 'data-v="inbox"') : ''}</div></section>` : ''}
+    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
+    ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
   </div>`;
 }
 const fmtDT = ts => { const d = kstDate(ts); const t = new Date(new Date(ts).getTime() + 9*HOUR).toISOString().slice(11,16); return `${md(d)} ${t}`; };
 function pageInquiry(){
   if(S.draft.inq === undefined) S.draft.inq = '';
-  const list = S.inquiries.map(q => `<article class="card">
-      <div class="card-top"><span class="time">${fmtDT(q.created_at)}</span>${q.reply ? '<span class="pill">답변 완료</span>' : '<span class="pill muted">답변 대기</span>'}</div>
-      <p class="content">${esc(q.content)}</p>
-      ${q.reply ? `<div class="comment"><b style="color:var(--fg)">관리자 답변</b> · ${fmtDT(q.replied_at)}<br>${esc(q.reply)}</div>` : ''}
-    </article>`).join('');
   return subHead('문의하기') + `<div class="settings pad">
     <form class="panel" data-form="inquiry">
       <div class="field"><label class="label" for="inq-text">문의 내용</label><textarea id="inq-text" maxlength="1000" data-model="inq" placeholder="불편한 점, 바라는 기능, 신고할 내용을 자유롭게 적어주세요">${esc(S.draft.inq)}</textarea></div>
-      <span class="hint">총 관리자에게 전달돼요. 답변이 오면 이 화면에서 볼 수 있어요.</span>
-      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>보내기</button></form>
-    ${list ? `<section class="group"><h2>내 문의</h2><div class="list" style="padding:0">${list}</div></section>` : ''}</div>`;
+      <span class="hint">보내주신 내용은 개발자에게 전해져요.</span>
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>보내기</button></form></div>`;
 }
 function pageInbox(){
+  const seenAt = Number(lsGet('inboxSeenAt') || 0);
   const list = S.inbox.map(q => `<article class="card">
-      <div class="card-top"><div class="who"><span class="avatar">${esc((q.nickname||'?').slice(0,1))}</span><span class="name">${esc(q.nickname || '(별명 없음)')}</span><span class="time">${q.group_name ? esc(q.group_name)+' · ' : ''}${fmtDT(q.created_at)}</span></div>${q.reply ? '<span class="pill">답변함</span>' : '<span class="pill warn">답변 대기</span>'}</div>
+      <div class="card-top"><div class="who"><span class="avatar">${esc((q.nickname||'?').slice(0,1))}</span><span class="name">${esc(q.nickname || '(별명 없음)')}</span><span class="time">${q.group_name ? esc(q.group_name)+' · ' : ''}${fmtDT(q.created_at)}</span></div>${new Date(q.created_at).getTime() > seenAt ? '<span class="pill warn">새 문의</span>' : ''}</div>
       <span class="hint" style="user-select:all">${esc(q.email || '')}</span>
       <p class="content">${esc(q.content)}</p>
-      <div class="field"><label class="label" for="reply-${q.id}">답변</label><textarea id="reply-${q.id}" maxlength="1000" style="min-height:90px" placeholder="답변을 적어주세요">${esc(q.reply || '')}</textarea></div>
-      <button class="btn btn-strong" data-act="sendReply" data-id="${q.id}">${q.reply ? '답변 고치기' : '답변 보내기'}</button>
     </article>`).join('');
   return subHead('받은 문의') + `<div class="settings pad">${list ? `<div class="list" style="padding:0">${list}</div>` : '<p class="empty">아직 받은 문의가 없어요.</p>'}</div>`;
 }
@@ -1040,8 +1026,8 @@ function errMsg(e){
 }
 
 /* ─── 데이터 흐름 ─── */
+const unseenInquiries = () => { const t = Number(lsGet('inboxSeenAt') || 0); return S.inbox.filter(q => new Date(q.created_at).getTime() > t).length; };
 async function loadInquiries(){
-  try{ S.inquiries = (await API.loadInquiries()) || []; }catch(e){ S.inquiries = []; }
   if(isSuper()){ try{ S.inbox = (await API.adminInquiries()) || []; }catch(e){ S.inbox = []; } } else S.inbox = [];
 }
 function pickGroup(){
@@ -1192,8 +1178,7 @@ const ACT = {
     S.page = d.v; S.cal = null;
     if(d.v === 'nick') S.draft.nick = S.profile.nickname;
     if(d.v === 'plan') S.draft.plan = null;
-    if(d.v === 'inquiry' && S.inquiries.some(q => q.reply && !q.reply_seen)){ API.markInquiriesSeen().then(() => { S.inquiries.forEach(q => { if(q.reply) q.reply_seen = true; }); }).catch(()=>{}); }
-    if(d.v === 'inbox') loadInquiries().then(render).catch(()=>{});
+    if(d.v === 'inbox') loadInquiries().then(() => { render(); lsSet('inboxSeenAt', String(Date.now())); }).catch(()=>{});
     render(); window.scrollTo(0,0);
   },
   back(){ S.page = null; S.cal = null; render(); window.scrollTo(0,0); },
@@ -1219,11 +1204,6 @@ const ACT = {
   copyCode(d){
     const done = () => toast(`입장 코드 ${d.v}를 복사했어요`);
     try{ navigator.clipboard.writeText(d.v).then(done, () => toast(`입장 코드: ${d.v}`)); }catch(e){ toast(`입장 코드: ${d.v}`); }
-  },
-  sendReply(d){
-    const id = Number(d.id), text = (document.getElementById('reply-'+d.id)?.value || '').trim();
-    if(!text){ toast('답변을 적어주세요'); return; }
-    guard(async () => { await API.replyInquiry(id, text); await loadInquiries(); toast('답변을 보냈어요'); });
   },
   planScope(d){ S.draft.plan.scope = d.v; render(); },
   planTimes(d){ S.draft.plan.times = Math.min(10, Math.max(1, S.draft.plan.times + Number(d.v))); render(); },
@@ -1283,7 +1263,7 @@ const FORMS = {
   inquiry(){
     const text = (S.draft.inq || '').trim();
     if(!text){ toast('문의 내용을 적어주세요'); return; }
-    guard(async () => { await API.sendInquiry({content:text, group_id: S.groupId || null}); S.draft.inq = ''; await loadInquiries(); toast('문의를 보냈어요. 답변이 오면 여기에서 알려드릴게요'); });
+    guard(async () => { await API.sendInquiry({content:text, group_id: S.groupId || null}); S.draft.inq = ''; S.page = null; toast('개발자에게 전했어요. 소중한 의견 고마워요'); });
   },
   createGroup(){
     const name = (document.getElementById('new-group')?.value || '').trim();

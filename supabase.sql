@@ -528,7 +528,9 @@ $$;
 revoke all on function public.my_last_group() from public, anon;
 grant execute on function public.my_last_group() to authenticated;
 
--- ─── 문의하기 ───
+-- ─── 문의하기 (개발자에게 일방향으로 전달) ───
+drop function if exists public.reply_inquiry(bigint, text);
+drop function if exists public.mark_inquiries_seen();
 create table if not exists public.inquiries (
   id bigint generated always as identity primary key,
   user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
@@ -557,26 +559,9 @@ begin
     select q.id, p.nickname, u.email::text, g.name, q.content, q.created_at, q.reply, q.replied_at
     from inquiries q join profiles p on p.id = q.user_id join auth.users u on u.id = q.user_id
     left join groups g on g.id = q.group_id
-    order by (q.reply is null) desc, q.created_at desc
+    order by q.created_at desc
     limit 500;
 end $$;
 
-create or replace function public.reply_inquiry(p_id bigint, p_reply text) returns void
-language plpgsql security definer set search_path = public as $$
-begin
-  if not public.is_super_admin() then raise exception 'NOT_ALLOWED'; end if;
-  update inquiries set reply = nullif(trim(p_reply), ''), replied_at = case when nullif(trim(p_reply), '') is null then null else now() end, reply_seen = false
-  where id = p_id;
-end $$;
-
-create or replace function public.mark_inquiries_seen() returns void
-language sql security definer set search_path = public as $$
-  update inquiries set reply_seen = true where user_id = auth.uid() and reply is not null and not reply_seen
-$$;
-
 revoke all on function public.admin_inquiries() from public, anon;
-revoke all on function public.reply_inquiry(bigint, text) from public, anon;
-revoke all on function public.mark_inquiries_seen() from public, anon;
 grant execute on function public.admin_inquiries() to authenticated;
-grant execute on function public.reply_inquiry(bigint, text) to authenticated;
-grant execute on function public.mark_inquiries_seen() to authenticated;
