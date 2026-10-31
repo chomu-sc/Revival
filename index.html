@@ -362,6 +362,7 @@ function supabaseApi(){
       const {data} = await sb.auth.getSession();
       S.session = data.session;
       sb.auth.onAuthStateChange((ev, session) => {
+        if(ev === 'PASSWORD_RECOVERY'){ S.recovery = true; S.session = session; render(); return; }
         const changed = (session?.user?.id || null) !== (S.session?.user?.id || null);
         S.session = session;
         if(changed) boot();
@@ -372,6 +373,9 @@ function supabaseApi(){
     checkCode: code => sb.rpc('check_group_code', {p_code:code}).then(chk),
     lastGroup: () => rpc('my_last_group'),
     signOut: () => sb.auth.signOut(),
+    resetPassword: email => sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname}).then(chk),
+    updatePassword: password => sb.auth.updateUser({password}).then(chk),
+    async deleteAccount(pw){ await rpc('delete_my_account', {p_password:pw}); try{ await sb.auth.signOut({scope:'local'}); }catch(e){} },
     loadProfile: () => sb.from('profiles').select('*').eq('id',uid()).single().then(chk),
     updateProfile: p => sb.from('profiles').update(p).eq('id',uid()).select().single().then(chk),
     loadGroups: () => rpc('my_groups'),
@@ -469,6 +473,9 @@ function demoApi(){
     async checkCode(code){ return db.groups.some(x => x.code === String(code||'').trim().toUpperCase()); },
     async lastGroup(){ const m = db.members.filter(x => x.user_id === ME).sort((a,b) => new Date(b.joined_at) - new Date(a.joined_at))[0]; return m ? m.group_id : null; },
     async signOut(){ db.session = false; save(); },
+    async resetPassword(){ },
+    async updatePassword(){ },
+    async deleteAccount(pw){ if(db.profile.is_super_admin) throw {message:'SUPER_ADMIN'}; if(String(pw).length < 6) throw {message:'BAD_PASSWORD'}; db = seed(); db.session = false; save(); },
     async loadProfile(){ return {...db.profile}; },
     async updateProfile(p){ if(p.nickname && Object.values(db.users).some(u => u.nickname === p.nickname)) throw {code:'23505'}; Object.assign(db.profile, p); save(); return {...db.profile}; },
     async loadGroups(){ if(!db.profile.is_super_admin) return []; return db.groups.map(g => ({...g, my_role: role(g.id), member_count: db.members.filter(m => m.group_id === g.id).length})); },
@@ -791,7 +798,7 @@ function calHtml(target, value, min, max){
 const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
 function subHead(title, back='내 정보', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
 function meHtml(){
-  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, inbox:pageInbox}[S.page])();
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, inbox:pageInbox, account:pageAccount}[S.page])();
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
@@ -800,7 +807,7 @@ function meHtml(){
     : (g?.my_role === 'admin' ? menuRow('adminGroup',`${I.shield(16)} 이 서버 관리`,'서버 관리자',`data-id="${g.id}"`) : '');
   return `<div class="topbar pad"><div><h1>내 정보</h1><span class="hint">${esc(S.session?.user?.email || '')}</span></div></div>` + demoBar() +
   `<div class="settings pad">
-    <section class="group"><h2>프로필</h2><div class="menu">${menuRow('page','별명',esc(p.nickname),'data-v="nick"')}</div></section>
+    <section class="group"><h2>프로필</h2><div class="menu">${menuRow('page','별명',esc(p.nickname),'data-v="nick"')}${menuRow('page','계정','비밀번호 · 탈퇴','data-v="account"')}</div></section>
     ${serverSection ? `<section class="group"><h2>서버</h2>${serverSection}</section>` : ''}
     <section class="group"><h2>성경 통독</h2><div class="menu">${menuRow('page','통독 목표',planLabel(pr),'data-v="plan"')}</div></section>
     <section class="group"><h2>설정</h2><div class="menu">
@@ -828,6 +835,20 @@ function pageInbox(){
       <p class="content">${esc(q.content)}</p>
     </article>`).join('');
   return subHead('받은 문의') + `<div class="settings pad">${list ? `<div class="list" style="padding:0">${list}</div>` : '<p class="empty">아직 받은 문의가 없어요.</p>'}</div>`;
+}
+function pageAccount(){
+  return subHead('계정') + `<div class="settings pad">
+    <section class="group"><h2>로그인 이메일</h2><div class="menu"><div class="menu-row"><span>${esc(S.session?.user?.email || '')}</span></div></div></section>
+    <section class="group"><h2>비밀번호 바꾸기</h2><form class="panel" data-form="changePassword">
+      <div class="field"><label class="label" for="cp-pw">새 비밀번호</label><input id="cp-pw" type="password" required minlength="6" autocomplete="new-password" placeholder="6자 이상"></div>
+      <div class="field"><label class="label" for="cp-pw2">한 번 더</label><input id="cp-pw2" type="password" required minlength="6" autocomplete="new-password"></div>
+      <button class="btn btn-strong btn-block" type="submit">비밀번호 바꾸기</button></form></section>
+    <section class="group"><h2>회원 탈퇴</h2>${isSuper()
+      ? `<div class="panel"><p class="hint" style="margin:0">총 관리자 계정은 앱에서 탈퇴할 수 없어요.</p></div>`
+      : `<form class="panel" data-form="deleteAccount">
+      <p class="lead" style="font-size:14px;margin:0">탈퇴하면 내 기도제목과 응답, 성경 읽기 기록, 문의가 모두 지워지고 되돌릴 수 없어요.</p>
+      <div class="field"><label class="label" for="del-pw">비밀번호 확인</label><input id="del-pw" type="password" required autocomplete="current-password" placeholder="지금 쓰는 비밀번호"></div>
+      <button class="btn btn-danger btn-block" type="submit">탈퇴하기</button></form>`}</section></div>`;
 }
 function pageNick(){
   if(S.draft.nick === undefined) S.draft.nick = S.profile.nickname;
@@ -911,7 +932,29 @@ function pageAdminGroup(){
   </div>`;
 }
 
+function recoveryHtml(){
+  return heroHtml(true, false) + `<div class="auth pad">
+    <p class="lead"><b>새 비밀번호</b>를 정해주세요.</p>
+    <form data-form="newPassword">
+      <div class="field"><label class="label" for="new-pw">새 비밀번호</label><input id="new-pw" type="password" required minlength="6" autocomplete="new-password" placeholder="6자 이상"></div>
+      <div class="field"><label class="label" for="new-pw2">한 번 더</label><input id="new-pw2" type="password" required minlength="6" autocomplete="new-password"></div>
+      ${S.authMsg ? `<p class="msg" role="alert">${esc(S.authMsg.text)}</p>` : ''}
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>비밀번호 바꾸기</button>
+    </form></div>`;
+}
+function forgotHtml(){
+  if(!S.draft.auth) S.draft.auth = {email:'', pw:'', code:''};
+  return heroHtml(true, false) + demoBar() + `<div class="auth pad">
+    <button class="back" data-act="authMode" data-v="login">${I.left(20)}로그인</button>
+    <p class="lead">가입한 이메일을 넣으면 <b>비밀번호를 다시 정하는 링크</b>를 보내드려요.</p>
+    <form data-form="forgot">
+      <div class="field"><label class="label" for="forgot-email">이메일</label><input id="forgot-email" type="email" required autocomplete="email" placeholder="name@example.com" value="${esc(S.draft.auth.email)}" data-model="auth.email"></div>
+      ${S.authMsg ? `<p class="msg ${S.authMsg.ok?'ok':''}" role="alert">${esc(S.authMsg.text)}</p>` : ''}
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>재설정 링크 보내기</button>
+    </form></div>`;
+}
 function authHtml(){
+  if(S.authMode === 'forgot') return forgotHtml();
   const signup = S.authMode === 'signup';
   if(!S.draft.auth) S.draft.auth = {email:'', pw:'', code:''};
   const A = S.draft.auth;
@@ -923,7 +966,7 @@ function authHtml(){
       ${signup ? `<div class="field"><label class="label" for="auth-code">서버 입장 코드</label><input id="auth-code" type="text" class="code-input" required maxlength="12" placeholder="모임에서 받은 코드" autocomplete="off" autocapitalize="characters" value="${esc(A.code)}" data-model="auth.code"></div>` : ''}
       ${S.authMsg ? `<p class="msg ${S.authMsg.ok?'ok':''}" role="alert">${esc(S.authMsg.text)}</p>` : ''}
       <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>${signup ? '가입하기' : '로그인'}</button>
-    </form></div>`;
+    </form>${signup ? '' : `<button class="btn btn-ghost" data-act="authMode" data-v="forgot">비밀번호를 잊으셨나요?</button>`}</div>`;
 }
 function codeHtml(){
   return heroHtml(true, false) + demoBar() + `<div class="auth pad">
@@ -995,6 +1038,7 @@ function render(){
   let html;
   if(S.fatal) html = heroHtml(true,false) + `<div class="auth pad"><p class="msg" role="alert">${esc(S.fatal)}</p><button class="btn btn-strong" data-act="retry">다시 시도</button></div>`;
   else if(!S.ready) html = heroHtml(true,false) + `<p class="empty">불러오는 중…</p>`;
+  else if(S.recovery) html = recoveryHtml();
   else if(!S.session) html = authHtml();
   else if(!S.profile) html = heroHtml(true,false) + `<p class="empty">프로필을 불러오지 못했어요.</p>`;
   else if(!S.profile.nickname) html = nicknameHtml();
@@ -1015,6 +1059,9 @@ function errMsg(e){
   if(m.includes('BAD_CODE')) return '이 코드로 들어갈 수 있는 서버가 없어요. 코드를 다시 확인해 주세요.';
   if(m.includes('NOT_MEMBER')) return '이 서버의 멤버가 아니에요. 입장 코드로 다시 들어와 주세요.';
   if(m.includes('NOT_ALLOWED') || m.includes('row-level security')) return '이 작업을 할 권한이 없어요.';
+  if(m.includes('BAD_PASSWORD')) return '비밀번호가 맞지 않아요.';
+  if(m.includes('SUPER_ADMIN')) return '총 관리자 계정은 앱에서 탈퇴할 수 없어요.';
+  if(m.includes('should be different')) return '지금 쓰는 비밀번호와 다른 비밀번호로 정해주세요.';
   if(m.includes('Invalid login')) return '이메일이나 비밀번호가 맞지 않아요.';
   if(m.includes('already registered')) return '이미 가입된 이메일이에요. 로그인해 주세요.';
   if(m.includes('Email not confirmed')) return '메일함에서 확인 링크를 먼저 눌러주세요.';
@@ -1145,7 +1192,7 @@ const ACT = {
   togglePublic(d){ const p = S.prayers.find(x => x.id == d.id); if(!p) return; guard(async () => { await API.setAnswerPublic(p.id, !p.answer_public); await loadGroupData(); toast(p.answer_public ? '나만 보기로 바꿨어요' : '보관함에 공개했어요'); }); },
   askDelete(d){ const id = Number(d.id); askConfirm('이 기도제목을 지울까요?', '함께 기도한 기록과 응답도 같이 지워지고, 되돌릴 수 없어요.', '지우기', async () => { await API.deletePrayer(id); await loadGroupData(); toast('기도제목을 지웠어요'); }); },
   askModDelete(d){ const id = Number(d.id); askConfirm('관리자 권한으로 지울까요?', '이 기도제목과 함께 기도한 기록이 모두 지워지고, 되돌릴 수 없어요.', '지우기', async () => { await API.modDelete(id); await loadGroupData(); toast('관리자 권한으로 지웠어요'); }); },
-  confirmYes(){ const run = S.sheet?.run; if(!run) return; guard(async () => { await run(); S.sheet = null; }); },
+  confirmYes(){ const run = S.sheet?.run; if(!run) return; guard(async () => { try{ await run(); } finally { S.sheet = null; } }); },
   close(){ S.sheet = null; render(); },
   bibleView(d){ S.bibleView = d.v; render(); if(d.v === 'stats') loadGroupData().then(render).catch(()=>{}); },
   testament(d){ S.testament = d.v; S.bookId = null; render(); },
@@ -1237,6 +1284,40 @@ const FORMS = {
         if(data?.session){ S.draft.auth = null; S.session = data.session; S.groupId = null; S.ready = false; render(); await boot(); }
         else if(signup){ S.draft.auth.pw = ''; S.draft.auth.code = ''; S.authMode = 'login'; S.authMsg = {ok:true, text:`${email}로 확인 메일을 보냈어요. 메일의 「가입 확인」 링크를 누르면 바로 로그인돼요. 메일이 안 보이면 스팸함도 확인해 주세요.`}; }
       }catch(e){ S.authMsg = {text:errMsg(e)}; }
+    });
+  },
+  forgot(){
+    const email = (document.getElementById('forgot-email')?.value || '').trim();
+    if(!email) return;
+    S.authMsg = null;
+    guard(async () => {
+      try{ await API.resetPassword(email); S.authMsg = {ok:true, text:`${email}로 비밀번호 재설정 링크를 보냈어요. 메일의 링크를 누르면 새 비밀번호를 정할 수 있어요. 메일이 안 보이면 스팸함도 확인해 주세요.`}; }
+      catch(e){ S.authMsg = {text:errMsg(e)}; }
+    });
+  },
+  newPassword(){
+    const a = document.getElementById('new-pw')?.value || '', b = document.getElementById('new-pw2')?.value || '';
+    if(a.length < 6){ S.authMsg = {text:'비밀번호는 6자 이상으로 정해주세요.'}; render(); return; }
+    if(a !== b){ S.authMsg = {text:'두 비밀번호가 서로 달라요.'}; render(); return; }
+    S.authMsg = null;
+    guard(async () => {
+      try{ await API.updatePassword(a); S.recovery = false; S.ready = false; render(); await boot(); toast('새 비밀번호로 바꿨어요'); }
+      catch(e){ S.authMsg = {text:errMsg(e)}; }
+    });
+  },
+  changePassword(){
+    const a = document.getElementById('cp-pw')?.value || '', b = document.getElementById('cp-pw2')?.value || '';
+    if(a.length < 6){ toast('비밀번호는 6자 이상으로 정해주세요'); return; }
+    if(a !== b){ toast('두 비밀번호가 서로 달라요'); return; }
+    guard(async () => { await API.updatePassword(a); S.page = null; toast('비밀번호를 바꿨어요'); });
+  },
+  deleteAccount(){
+    const pw = document.getElementById('del-pw')?.value || '';
+    if(!pw){ toast('비밀번호를 입력해 주세요'); return; }
+    askConfirm('정말 탈퇴할까요?', '내 기도제목, 응답, 성경 읽기 기록, 문의가 모두 지워지고 되돌릴 수 없어요.', '탈퇴하기', async () => {
+      await API.deleteAccount(pw);
+      S.session = null; S.profile = null; S.groups = []; S.groupId = null; lsSet('groupId',''); S.prayers = []; S.board = []; S.readings = [];
+      S.tab = 'pray'; S.page = null; S.authMode = 'login'; S.draft = {}; S.authMsg = {ok:true, text:'탈퇴했어요. 그동안 함께해 주셔서 고마워요.'};
     });
   },
   firstNick(){

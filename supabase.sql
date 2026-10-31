@@ -565,3 +565,19 @@ end $$;
 
 revoke all on function public.admin_inquiries() from public, anon;
 grant execute on function public.admin_inquiries() to authenticated;
+
+-- ─── 회원 탈퇴 (비밀번호를 서버에서 확인) ───
+create or replace function public.delete_my_account(p_password text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+declare enc text;
+begin
+  if auth.uid() is null then raise exception 'NOT_ALLOWED'; end if;
+  if public.is_super_admin() then raise exception 'SUPER_ADMIN'; end if;
+  select u.encrypted_password into enc from auth.users u where u.id = auth.uid();
+  if enc is null or enc = '' or extensions.crypt(coalesce(p_password, ''), enc) <> enc then
+    raise exception 'BAD_PASSWORD';
+  end if;
+  delete from auth.users where id = auth.uid();
+end $$;
+revoke all on function public.delete_my_account(text) from public, anon;
+grant execute on function public.delete_my_account(text) to authenticated;
