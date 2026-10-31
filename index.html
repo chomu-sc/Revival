@@ -18,7 +18,7 @@
 <body>
 <title>기도와 말씀</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap&text=%EC%84%B1%EA%B2%BD%ED%86%B5%EB%8F%85">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap&text=%EB%82%B4%EA%B8%B8%EC%9D%98%EB%B9%9B%EB%B0%9C%EB%93%B1%EC%84%B1%EA%B2%BD%ED%86%B5%EB%8F%85">
 <style>
 /* Layout: one phone-width column (max 480px). Sunrise/night hill hero on the prayer tab, fixed bottom nav, bottom sheets for writing. */
 :root{
@@ -91,9 +91,15 @@ h1,h2,h3{text-wrap:balance}
 /* common */
 .topbar{padding-block:28px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .topbar h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.5px}
-.brush{font-family:'Nanum Brush Script','Noto Sans KR',cursive;font-weight:400;font-size:52px;line-height:1;letter-spacing:.02em;color:var(--brush-ink);-webkit-text-stroke:.9px currentColor;transform:rotate(-2deg);display:inline-flex;gap:.06em;align-items:baseline;padding-block:4px 2px}
-.brush .a{color:var(--brush-accent);font-size:1.12em;transform:translateY(.04em) rotate(-3deg);display:inline-block}
-.brush .sp{width:.28em}
+.lamp-title{position:relative;isolation:isolate;display:grid;margin:0;padding:8px 6px 14px;font-family:'Nanum Brush Script','Noto Sans KR',cursive;font-weight:400;font-size:52px;line-height:1;letter-spacing:.03em}
+.lamp-title .t{grid-area:1/1;position:relative;white-space:nowrap;-webkit-text-stroke:.8px currentColor;transform:rotate(-2deg);transition:opacity .8s ease}
+.lamp-title .t-day{opacity:var(--day-op);color:#2A2620}
+.lamp-title .t-day::before{content:"";position:absolute;z-index:-1;right:-26px;top:-22px;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,rgba(255,206,110,.85) 0%,rgba(255,214,130,.45) 38%,rgba(255,214,130,0) 70%)}
+.lamp-title .t-day svg{position:absolute;z-index:-1;left:-4px;right:-10px;bottom:-12px;width:calc(100% + 14px);height:20px;overflow:visible}
+.lamp-title .t-night{opacity:var(--night-op);color:#FFD98A;text-shadow:0 0 8px rgba(255,196,96,.85),0 0 22px rgba(255,160,60,.5),0 0 44px rgba(255,140,40,.25);animation:lamp-flicker 3.6s ease-in-out infinite}
+.lamp-title .t-night::before{content:"";position:absolute;z-index:-1;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(255,176,72,.42) 0%,rgba(255,150,50,.16) 45%,rgba(255,150,50,0) 72%);animation:lamp-glow 3.6s ease-in-out infinite}
+@keyframes lamp-flicker{0%,100%{text-shadow:0 0 8px rgba(255,196,96,.85),0 0 22px rgba(255,160,60,.5),0 0 44px rgba(255,140,40,.25)}40%{text-shadow:0 0 6px rgba(255,196,96,.75),0 0 18px rgba(255,160,60,.42),0 0 36px rgba(255,140,40,.2)}55%{text-shadow:0 0 10px rgba(255,200,100,.9),0 0 26px rgba(255,165,64,.55),0 0 50px rgba(255,140,40,.3)}}
+@keyframes lamp-glow{0%,100%{transform:scale(1);opacity:1}45%{transform:scale(.94);opacity:.85}60%{transform:scale(1.04);opacity:1}}
 .icon-btn{width:44px;height:44px;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;color:var(--fg);flex-shrink:0}
 .icon-btn:hover{background:var(--soft)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
@@ -670,7 +676,9 @@ function prayHtml(){
 
 function bibleHtml(){
   const pr = computeProgress(S.profile, S.readings);
-  return `<div class="topbar pad" style="background:var(--surface)"><h1 class="brush" aria-label="성경 통독"><span class="a" aria-hidden="true">성</span><span aria-hidden="true">경</span><span class="sp"></span><span class="a" aria-hidden="true">통</span><span aria-hidden="true">독</span></h1></div>
+  return `<div class="topbar pad" style="background:var(--surface)"><h1 class="lamp-title" aria-label="성경 통독 · 주의 말씀은 내 발에 등이요 내 길에 빛이니이다">
+      <span class="t t-day" aria-hidden="true">내 길의 빛<svg viewBox="0 0 240 20" preserveAspectRatio="none" aria-hidden="true"><path d="M2 15 C 40 4, 78 19, 118 11 S 196 3, 236 9" fill="none" stroke="#D2B47A" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 8"/><path d="M2 17 C 40 8, 78 21, 118 14 S 196 6, 236 12" fill="none" stroke="#E8D3A6" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg></span>
+      <span class="t t-night" aria-hidden="true">내 발의 등</span></h1></div>
     <div class="pad" style="background:var(--surface);padding-bottom:4px"><div class="seg" role="tablist">
       <button class="${S.bibleView==='check'?'on':''}" data-act="bibleView" data-v="check" aria-pressed="${S.bibleView==='check'}">읽은 장 체크</button>
       <button class="${S.bibleView==='stats'?'on':''}" data-act="bibleView" data-v="stats" aria-pressed="${S.bibleView==='stats'}">통계</button></div></div>` +
