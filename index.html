@@ -238,7 +238,9 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .ch.del{background:var(--warn-tint);border:2px solid var(--warn);color:var(--warn);font-weight:800;text-decoration:line-through}
 .ch:disabled{opacity:.35;cursor:default}
 .book-title{flex-wrap:wrap;gap:8px}
-.ch sup{position:absolute;top:3px;right:4px;font-size:9px;line-height:1}
+.ch .dots{position:absolute;left:0;right:0;bottom:4px;display:flex;justify-content:center;align-items:center;gap:2px;pointer-events:none}
+.ch .dots i{width:4px;height:4px;border-radius:2px;background:currentColor;opacity:.85}
+.ch .dots b{font-size:8px;line-height:4px;font-weight:800}
 .confirm{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(min(480px,100%) - 24px);box-sizing:border-box;background:var(--strong);color:var(--on-strong);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px var(--shadow)}
 .confirm small{font-size:12px;opacity:.75;line-height:1.5}
 .confirm strong{font-size:17px}
@@ -348,7 +350,7 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
-const APP_VERSION = '2026.11.01-2130';
+const APP_VERSION = '2026.11.01-2320';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -827,7 +829,7 @@ function checkHtml(pr){
   for(let c=1;c<=book.c;c++){
     const k = book.id+'-'+c, n = pr.counts.get(k) || 0, sel = S.sel.has(k);
     const label = `${book.name} ${c}장${n>0 ? `, ${n}번 읽음` : ''}`;
-    const sup = n>1 || (pr.times>1 && n>0) ? `<sup>×${n}</sup>` : '';
+    const sup = n>1 || (pr.times>1 && n>0) ? `<span class="dots" aria-hidden="true">${'<i></i>'.repeat(Math.min(n,5))}${n>5 ? '<b>+</b>' : ''}</span>` : '';
     if(S.fixMode){
       const has = (allCounts.get(k) || 0) > 0;
       cells += `<button class="ch num ${sel ? 'del' : (n>=pr.times ? 'done' : n>0 ? 'part' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}${has ? '' : ', 지울 기록 없음'}" ${has ? '' : 'disabled'}>${c}${sup}</button>`;
@@ -1123,7 +1125,7 @@ function pageAdminGroup(){
       <div class="between"><span class="code num" aria-label="입장 코드 ${esc(g.code.split('').join(' '))}">${esc(g.code)}</span>
       <span class="foot-actions"><button class="btn btn-sm btn-ghost" data-act="copyCode" data-v="${esc(g.code)}">${I.copy(15)}복사</button><button class="btn btn-sm btn-ghost" data-act="askRegen">새 코드</button></span></div></section>
     ${isSuper() ? `<section class="panel"><h2>서버 이름</h2><form class="inline" data-form="renameGroup"><input id="rename-group" type="text" maxlength="30" value="${esc(g.name)}" aria-label="서버 이름"><button class="btn btn-strong" type="submit">바꾸기</button></form></section>` : ''}
-    <section class="panel" style="gap:0;padding-block:8px"><div class="between" style="padding-bottom:8px"><h2>멤버 ${S.members.length}명</h2>${isSuper() ? '' : '<span class="hint">관리자 임명은 총 관리자만 할 수 있어요</span>'}</div>${members || '<p class="hint">불러오는 중…</p>'}</section>
+    <section class="panel" style="gap:0;padding-block:8px"><div class="between" style="padding-bottom:8px"><h2>멤버 ${S.members.length}명</h2></div>${members || '<p class="hint">불러오는 중…</p>'}</section>
     <span class="hint">부적절한 기도제목은 기도 탭이나 응답 보관함에서 ${I.shield(12)}삭제 버튼으로 지울 수 있어요.</span>
     ${isSuper() ? `<button class="btn btn-danger btn-block" data-act="askDeleteGroup">서버 삭제</button>` : ''}
   </div>`;
