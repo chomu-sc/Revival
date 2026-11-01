@@ -217,6 +217,8 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .ch{height:44px;border-radius:10px;border:1.5px solid var(--chip-line);background:var(--surface);color:var(--fg);font-size:14px;font-weight:500;position:relative;padding:0}
 .ch.done{background:var(--strong);border-color:var(--strong);color:var(--on-strong);font-weight:700}
 .ch.sel{background:var(--accent-tint);border:2px solid var(--accent);color:var(--accent-ink);font-weight:800}
+.ch.last-read{animation:last-read 1.6s ease}
+@keyframes last-read{0%,60%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
 .ch.del{background:var(--warn-tint);border:2px solid var(--warn);color:var(--warn);font-weight:800;text-decoration:line-through}
 .ch:disabled{opacity:.35;cursor:default}
 .book-title{flex-wrap:wrap;gap:8px}
@@ -750,6 +752,11 @@ function readersHtml(){
 }
 function checkHtml(pr){
   const testaments = pr.scope === 'ALL' ? ['OT','NT'] : [pr.scope];
+  if(S.jumpToLast || S.bookId == null){
+    S.jumpToLast = false;
+    const last = S.readings.filter(r => testaments.includes(BOOK[r.book]?.t)).reduce((a, r) => (!a || Number(r.id) > Number(a.id)) ? r : a, null);
+    if(last){ S.testament = BOOK[last.book].t; S.bookId = last.book; S.scrollToCh = last.book + '-' + last.chapter; }
+  }
   if(!testaments.includes(S.testament)) S.testament = testaments[0];
   const books = BOOKS.filter(b => b.t === S.testament);
   const doneIn = b => { let n = 0; for(let c=1;c<=b.c;c++) if((pr.counts.get(b.id+'-'+c)||0) >= pr.times) n++; return n; };
@@ -1164,6 +1171,10 @@ function render(){
     else { const on = el.querySelector('.chip.on'); if(on) el.scrollLeft = Math.max(0, on.offsetLeft - el.clientWidth/2 + on.offsetWidth/2); }
   });
   document.body.style.overflow = S.sheet ? 'hidden' : '';
+  if(S.scrollToCh){
+    const k = S.scrollToCh; S.scrollToCh = null;
+    requestAnimationFrame(() => { const el = app.querySelector(`.grid .ch[data-k="${k}"]`); if(el){ el.scrollIntoView({block:'center'}); el.classList.add('last-read'); setTimeout(() => el.classList.remove('last-read'), 1600); } });
+  }
 }
 
 let toastTimer;
@@ -1260,7 +1271,7 @@ async function switchTo(id){ S.groupId = id; lsSet('groupId', id); S.prayers = [
 const ACT = {
   noop(){},
   retry(){ S.fatal = ''; S.ready = false; start(); },
-  tab(d){ S.tab = d.tab; S.sheet = null; S.page = null; S.cal = null; S.fixMode = false; S.sel.clear(); render(); window.scrollTo(0,0); loadGroupData().then(render).catch(()=>{}); },
+  tab(d){ if(d.tab === 'bible'){ S.jumpToLast = true; S.bookId = null; } S.tab = d.tab; S.sheet = null; S.page = null; S.cal = null; S.fixMode = false; S.sel.clear(); render(); window.scrollTo(0,0); loadGroupData().then(render).catch(()=>{}); },
   prayTab(d){ S.prayTab = d.v; render(); },
   refresh(){ guard(async () => { await loadGroups(); await loadGroupData(); toast('새로 불러왔어요'); }); },
   async demoReset(){ if(!IS_DEMO) return; await API.reset(); S.sel.clear(); S.sheet = null; S.page = null; S.draft = {}; S.groupId = null; S.ready = false; await boot(); toast('체험 데이터를 처음 상태로 되돌렸어요'); },
