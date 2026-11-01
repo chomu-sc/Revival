@@ -129,6 +129,8 @@ h1,h2,h3{text-wrap:balance}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--chip-line);background:var(--surface);color:var(--muted);font-size:14px;font-weight:500;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:6px}
+.chip.part{background:color-mix(in srgb,var(--strong) 14%,var(--surface));border-color:color-mix(in srgb,var(--strong) 35%,var(--surface));color:var(--fg)}
+.chip.full{background:color-mix(in srgb,var(--strong) 30%,var(--surface));border-color:color-mix(in srgb,var(--strong) 50%,var(--surface));color:var(--fg);font-weight:700}
 .chip.on{background:var(--strong);border-color:var(--strong);color:var(--on-strong);font-weight:700}
 .filterbar{background:var(--surface);border-bottom:1px solid var(--line)}
 .list{display:flex;flex-direction:column;gap:12px;padding-block:16px}
@@ -350,7 +352,7 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
-const APP_VERSION = '2026.11.01-2325';
+const APP_VERSION = '2026.11.01-2330';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -823,7 +825,8 @@ function checkHtml(pr){
   if(!books.some(b => b.id === S.bookId)){ const next = books.find(b => doneIn(b) < b.c) || books[0]; S.bookId = next.id; }
   const book = BOOK[S.bookId];
   const tabs = testaments.length > 1 ? `<div class="seg">${testaments.map(t => `<button class="${S.testament===t?'on':''}" data-act="testament" data-v="${t}" aria-pressed="${S.testament===t}">${SCOPE_NAME[t]} ${t==='OT'?39:27}권</button>`).join('')}</div>` : '';
-  const chips = books.map(b => { const full = doneIn(b) === b.c; return `<button class="chip ${b.id===S.bookId?'on':''}" data-act="book" data-v="${b.id}" aria-pressed="${b.id===S.bookId}">${b.name}${full ? I.check(14) : ''}</button>`; }).join('');
+  const started = b => { for(let c=1;c<=b.c;c++) if(pr.counts.get(b.id+'-'+c)) return true; return false; };
+  const chips = books.map(b => { const full = doneIn(b) === b.c; return `<button class="chip ${b.id===S.bookId?'on':(full?'full':started(b)?'part':'')}" data-act="book" data-v="${b.id}" aria-pressed="${b.id===S.bookId}">${b.name}${full ? I.check(14) : ''}</button>`; }).join('');
   let cells = '';
   const allCounts = new Map(); S.readings.forEach(r => { const k = r.book+'-'+r.chapter; allCounts.set(k, (allCounts.get(k)||0)+1); });
   for(let c=1;c<=book.c;c++){
