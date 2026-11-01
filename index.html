@@ -385,6 +385,7 @@ function initFontStep(){ const v = lsGet('fontStep'); if(v !== null && /^[0-4]$/
 const FONT_STEPS = [['작게',0.9], ['보통',1], ['조금 크게',1.1], ['크게',1.2], ['아주 크게',1.32]];
 const fontLabel = () => FONT_STEPS[S.fontStep][0];
 function applyFontScale(){ document.documentElement.style.setProperty('--ui-zoom', String(FONT_STEPS[S.fontStep][1])); }
+const isSampleAccount = () => (S.session?.user?.email || '').toLowerCase() === 'sam@ple';
 const curGroup = () => S.groups.find(g => g.id === S.groupId) || null;
 const isSuper = () => !!S.profile?.is_super_admin;
 const canModerate = (g = curGroup()) => isSuper() || g?.my_role === 'admin';
@@ -926,6 +927,9 @@ function pageInstall(){
     ${kind === 'android' ? android + ios : ios + android}</div>`;
 }
 function pageAccount(){
+  if(isSampleAccount()) return subHead('계정') + `<div class="settings pad">
+    <section class="group"><h2>로그인 이메일</h2><div class="menu"><div class="menu-row"><span>${esc(S.session?.user?.email || '')}</span></div></div></section>
+    <div class="panel"><p class="lead" style="margin:0;font-size:14px">여러 사람이 함께 쓰는 미리보기 계정이라 비밀번호를 바꾸거나 탈퇴할 수 없어요. 직접 쓰려면 로그아웃한 뒤 회원가입해 주세요.</p></div></div>`;
   return subHead('계정') + `<div class="settings pad">
     <section class="group"><h2>로그인 이메일</h2><div class="menu"><div class="menu-row"><span>${esc(S.session?.user?.email || '')}</span></div></div></section>
     <section class="group"><h2>비밀번호 바꾸기</h2><form class="panel" data-form="changePassword">
@@ -940,6 +944,7 @@ function pageAccount(){
       <button class="btn btn-danger btn-block" type="submit">탈퇴하기</button></form>`}</section></div>`;
 }
 function pageNick(){
+  if(isSampleAccount()) return subHead('별명') + `<div class="settings pad"><div class="panel"><p class="lead" style="margin:0;font-size:14px">미리보기 계정이라 별명을 바꿀 수 없어요.</p></div></div>`;
   if(S.draft.nick === undefined) S.draft.nick = S.profile.nickname;
   return subHead('별명') + `<div class="settings pad"><form class="panel" data-form="nickname">
     <div class="field"><label class="label" for="me-nick">새 별명</label><input id="me-nick" type="text" maxlength="12" value="${esc(S.draft.nick)}" data-model="nick" autocomplete="nickname"></div>
@@ -1153,6 +1158,7 @@ function errMsg(e){
   if(m.includes('BAD_CODE')) return '이 코드로 들어갈 수 있는 서버가 없어요. 코드를 다시 확인해 주세요.';
   if(m.includes('NOT_MEMBER')) return '이 서버의 멤버가 아니에요. 입장 코드로 다시 들어와 주세요.';
   if(m.includes('NOT_ALLOWED') || m.includes('row-level security')) return '이 작업을 할 권한이 없어요.';
+  if(m.includes('SAMPLE_ACCOUNT') || (isSampleAccount() && m.includes('Database error'))) return '미리보기 계정은 바꿀 수 없어요.';
   if(m.includes('BAD_PASSWORD')) return '비밀번호가 맞지 않아요.';
   if(m.includes('SUPER_ADMIN')) return '총 관리자 계정은 앱에서 탈퇴할 수 없어요.';
   if(m.includes('should be different')) return '지금 쓰는 비밀번호와 다른 비밀번호로 정해주세요.';
