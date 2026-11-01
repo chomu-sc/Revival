@@ -238,7 +238,7 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .ch.del{background:var(--warn-tint);border:2px solid var(--warn);color:var(--warn);font-weight:800;text-decoration:line-through}
 .ch:disabled{opacity:.35;cursor:default}
 .book-title{flex-wrap:wrap;gap:8px}
-.ch .dots{position:absolute;left:0;right:0;bottom:4px;display:flex;justify-content:center;align-items:center;gap:2px;pointer-events:none}
+.ch .dots{position:absolute;top:5px;right:5px;display:flex;justify-content:flex-end;align-items:center;gap:2px;pointer-events:none}
 .ch .dots i{width:4px;height:4px;border-radius:2px;background:currentColor;opacity:.85}
 .ch .dots b{font-size:8px;line-height:4px;font-weight:800}
 .confirm{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(min(480px,100%) - 24px);box-sizing:border-box;background:var(--strong);color:var(--on-strong);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px var(--shadow)}
@@ -350,7 +350,7 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
-const APP_VERSION = '2026.11.01-2320';
+const APP_VERSION = '2026.11.01-2325';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
