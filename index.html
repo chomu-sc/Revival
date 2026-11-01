@@ -947,8 +947,8 @@ function pageNick(){
   if(isSampleAccount()) return subHead('별명') + `<div class="settings pad"><div class="panel"><p class="lead" style="margin:0;font-size:14px">미리보기 계정이라 별명을 바꿀 수 없어요.</p></div></div>`;
   if(S.draft.nick === undefined) S.draft.nick = S.profile.nickname;
   return subHead('별명') + `<div class="settings pad"><form class="panel" data-form="nickname">
-    <div class="field"><label class="label" for="me-nick">새 별명</label><input id="me-nick" type="text" maxlength="12" value="${esc(S.draft.nick)}" data-model="nick" autocomplete="nickname"></div>
-    <span class="hint">기도제목과 함께 읽는 사람들에 이 이름으로 보여요. 2–12자, 다른 사람과 겹칠 수 없어요.</span>
+    <div class="field"><label class="label" for="me-nick">새 별명</label><input id="me-nick" type="text" maxlength="12" minlength="2" placeholder="2~12글자" value="${esc(S.draft.nick)}" data-model="nick" autocomplete="nickname"></div>
+    <span class="hint">2~12글자로 정해주세요. 기도제목과 함께 읽는 사람들에 이 이름으로 보이고, 다른 사람과 겹칠 수 없어요.</span>
     <button class="btn btn-strong btn-block" type="submit">저장</button></form></div>`;
 }
 function pageServers(){
@@ -1080,7 +1080,7 @@ function nicknameHtml(){
   return heroHtml(true, false) + `<div class="auth pad">
     <p class="lead">함께 기도하고 성경을 읽을 때 보일 <b>별명</b>을 정해주세요. 나중에 언제든 바꿀 수 있어요.</p>
     <form data-form="firstNick">
-      <div class="field"><label class="label" for="first-nick">별명</label><input id="first-nick" type="text" required maxlength="12" placeholder="예: 은혜로운양" autocomplete="nickname"></div>
+      <div class="field"><label class="label" for="first-nick">별명</label><input id="first-nick" type="text" required maxlength="12" placeholder="2~12글자" minlength="2" autocomplete="nickname"></div>
       ${S.authMsg ? `<p class="msg" role="alert">${esc(S.authMsg.text)}</p>` : ''}
       <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>시작하기</button>
     </form><button class="btn btn-ghost" data-act="signOut">다른 계정으로 로그인</button></div>`;
@@ -1434,13 +1434,13 @@ const FORMS = {
   },
   firstNick(){
     const v = document.getElementById('first-nick').value.trim();
-    if(v.length < 2){ S.authMsg = {text:'별명은 2자 이상으로 정해주세요.'}; render(); return; }
+    if(v.length < 2 || v.length > 12){ S.authMsg = {text:'별명은 2~12글자로 정해주세요.'}; render(); return; }
     S.authMsg = null;
     guard(async () => { try{ S.profile = await API.updateProfile({nickname:v}); await loadGroupData(); }catch(e){ S.authMsg = {text:errMsg(e)}; } });
   },
   nickname(){
     const v = (S.draft.nick || '').trim();
-    if(v.length < 2){ toast('별명은 2자 이상으로 정해주세요'); return; }
+    if(v.length < 2 || v.length > 12){ toast('별명은 2~12글자로 정해주세요'); return; }
     if(v === S.profile.nickname){ S.page = null; render(); return; }
     guard(async () => { S.profile = await API.updateProfile({nickname:v}); S.page = null; await loadGroupData(); toast(`이제 '${v}'(으)로 보여요`); });
   },
