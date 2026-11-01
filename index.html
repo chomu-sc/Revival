@@ -764,7 +764,7 @@ function checkHtml(pr){
       ${readersHtml()}
       ${tabs}
     </section>
-    <div class="pad"><div class="chips">${chips}</div>
+    <div class="pad"><div class="chips" id="book-chips" data-keep-scroll>${chips}</div>
       <div class="book-title"><div style="display:flex;align-items:baseline;gap:8px"><h2>${book.name}</h2><span class="count num">${doneIn(book)} / ${book.c}장</span></div>
         <button class="btn btn-sm ${S.fixMode ? 'btn-strong' : 'btn-ghost'}" data-act="toggleFix" aria-pressed="${!!S.fixMode}">${S.fixMode ? '고치기 끝' : '잘못 누른 기록 지우기'}</button></div>
       <p class="hint" style="margin:-4px 0 10px">${S.fixMode ? '지울 장을 누르세요. 그 장의 가장 최근 읽은 기록 하나가 지워져요.' : '누른 채로 밀면 여러 장을 한 번에 고를 수 있어요'}</p>
@@ -1143,7 +1143,13 @@ function render(){
   else if(!S.profile.nickname) html = nicknameHtml();
   else if(!isSuper() && !curGroup()) html = codeHtml();
   else html = ({pray:prayHtml, bible:bibleHtml, answers:answersHtml, me:meHtml}[S.tab])() + navHtml();
+  const keep = {};
+  app.querySelectorAll('[data-keep-scroll][id]').forEach(el => { keep[el.id] = el.scrollLeft; });
   app.innerHTML = html + sheetHtml();
+  app.querySelectorAll('[data-keep-scroll][id]').forEach(el => {
+    if(el.id in keep) el.scrollLeft = keep[el.id];
+    else { const on = el.querySelector('.chip.on'); if(on) el.scrollLeft = Math.max(0, on.offsetLeft - el.clientWidth/2 + on.offsetWidth/2); }
+  });
   document.body.style.overflow = S.sheet ? 'hidden' : '';
 }
 
