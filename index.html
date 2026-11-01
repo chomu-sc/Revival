@@ -220,6 +220,18 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding-bottom:190px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .ch{height:44px;border-radius:10px;border:1.5px solid var(--chip-line);background:var(--surface);color:var(--fg);font-size:14px;font-weight:500;position:relative;padding:0}
 .ch.done{background:var(--strong);border-color:var(--strong);color:var(--on-strong);font-weight:700}
+.warn-note{justify-content:space-between;background:var(--warn-tint);margin-top:10px}
+.warn-note .btn{flex-shrink:0}
+.photo-row{display:flex;flex-wrap:wrap;gap:8px}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--line);padding:0;background:var(--surface)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .rm{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:11px;border:0;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.photo-add{width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--chip-line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--muted);cursor:pointer}
+.photo-add input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.photo-view{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px}
+.photo-view img{max-width:100%;max-height:100%;border-radius:8px}
+.photo-view .rm{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:40px;height:40px;border-radius:20px;border:0;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center}
+.ch.part{background:color-mix(in srgb,var(--strong) 30%,var(--surface));border-color:var(--strong);font-weight:700}
 .ch.sel{background:var(--accent-tint);border:2px solid var(--accent);color:var(--accent-ink);font-weight:800}
 .ch.last-read{animation:last-read 1.6s ease}
 @keyframes last-read{0%,60%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
@@ -336,7 +348,7 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
-const APP_VERSION = '2026.11.01-1830';
+const APP_VERSION = '2026.11.01-2130';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -368,6 +380,22 @@ function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; 
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 
 /* ─── 통독 진행 계산 ─── */
+const DEMO_PHOTOS = {};
+const MAX_PHOTOS = 4;
+function shrinkImage(file, max = 1600){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth*k); c.height = Math.round(img.naturalHeight*k);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('IMG')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('IMG')); };
+    img.src = url;
+  });
+}
 function computeProgress(profile, readings){
   const start = profile.plan_start, end = profile.plan_end, times = profile.plan_times || 1, scope = profile.plan_scope || 'ALL';
   const counts = new Map(); const today = appToday(); let todayCount = 0;
@@ -462,6 +490,24 @@ function supabaseApi(){
     deleteReadings: ids => sb.from('readings').delete().in('id', ids).then(chk),
     loadBoard: g => rpc('reading_board', {p_group:g}),
     sendInquiry: o => sb.from('inquiries').insert(o).select('id').single().then(chk),
+    async uploadInquiryPhotos(inquiryId, blobs){
+      for(let i=0;i<blobs.length;i++){
+        const path = `${uid()}/${inquiryId}/${i+1}-${Math.random().toString(36).slice(2,8)}.jpg`;
+        const up = await sb.storage.from('inquiry-photos').upload(path, blobs[i], {contentType:'image/jpeg', upsert:false});
+        if(up.error) throw up.error;
+        chk(await sb.from('inquiry_photos').insert({inquiry_id:inquiryId, path}));
+      }
+    },
+    async inquiryPhotos(ids){
+      if(!ids.length) return {};
+      const rows = chk(await sb.from('inquiry_photos').select('inquiry_id,path').in('inquiry_id', ids).order('id')) || [];
+      if(!rows.length) return {};
+      const signed = await sb.storage.from('inquiry-photos').createSignedUrls(rows.map(r => r.path), 3600);
+      const urls = {}; (signed.data || []).forEach(x => { if(x.signedUrl) urls[x.path] = x.signedUrl; });
+      const out = {}; rows.forEach(r => { if(urls[r.path]) (out[r.inquiry_id] = out[r.inquiry_id] || []).push({path:r.path, url:urls[r.path]}); });
+      return out;
+    },
+    async removeInquiryPhotos(paths){ if(paths.length) await sb.storage.from('inquiry-photos').remove(paths); },
     notifyInquiry: id => sb.functions.invoke('notify-inquiry', {body:{inquiry_id:id}}).catch(() => {}),
     savePush: (endpoint, p256dh, auth) => rpc('save_push_subscription', {p_endpoint:endpoint, p_p256dh:p256dh, p_auth:auth}),
     removePush: endpoint => rpc('remove_push_subscription', {p_endpoint:endpoint}),
@@ -585,6 +631,9 @@ function demoApi(){
     },
     async sendInquiry(o){ db.inquiries = db.inquiries || []; const id = Date.now(); db.inquiries.push({id, user_id:ME, created_at:new Date().toISOString(), ...o}); save(); return {id}; },
     async notifyInquiry(){ },
+    async uploadInquiryPhotos(id, blobs){ DEMO_PHOTOS[id] = blobs.map((b,i) => ({path:`demo/${id}/${i}`, url:URL.createObjectURL(b)})); },
+    async inquiryPhotos(ids){ const out = {}; ids.forEach(id => { if(DEMO_PHOTOS[id]) out[id] = DEMO_PHOTOS[id]; }); return out; },
+    async removeInquiryPhotos(){ },
     async savePush(){ }, async removePush(){ }, async hasPush(){ return false; },
     async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at, hidden:!!q.hidden})).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
     async hideInquiry(id, hidden){ if(!db.profile.is_super_admin) deny(); const q = (db.inquiries||[]).find(x => x.id === id); if(q) q.hidden = hidden; save(); },
@@ -781,9 +830,9 @@ function checkHtml(pr){
     const sup = n>1 || (pr.times>1 && n>0) ? `<sup>×${n}</sup>` : '';
     if(S.fixMode){
       const has = (allCounts.get(k) || 0) > 0;
-      cells += `<button class="ch num ${sel ? 'del' : (n>0 ? 'done' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}${has ? '' : ', 지울 기록 없음'}" ${has ? '' : 'disabled'}>${c}${sup}</button>`;
+      cells += `<button class="ch num ${sel ? 'del' : (n>=pr.times ? 'done' : n>0 ? 'part' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}${has ? '' : ', 지울 기록 없음'}" ${has ? '' : 'disabled'}>${c}${sup}</button>`;
     } else {
-      cells += `<button class="ch num ${sel ? 'sel' : (n>0 ? 'done' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}">${c}${sup}</button>`;
+      cells += `<button class="ch num ${sel ? 'sel' : (n>=pr.times ? 'done' : n>0 ? 'part' : '')}" data-act="ch" data-k="${k}" aria-pressed="${sel}" aria-label="${label}">${c}${sup}</button>`;
     }
   }
   return `<section class="bible-head pad">
@@ -791,6 +840,7 @@ function checkHtml(pr){
         <span class="count num"><b>${pr.done.toLocaleString('ko-KR')}</b> / ${pr.total.toLocaleString('ko-KR')}장</span></div>
       <div class="bar"><i style="width:${Math.min(100,pr.pct)}%"></i></div>
       ${readersHtml()}
+      ${outOfPlanHtml(pr)}
       ${tabs}
     </section>
     <div class="pad"><div class="chips" id="book-chips" data-keep-scroll>${chips}</div>
@@ -799,6 +849,12 @@ function checkHtml(pr){
       <p class="hint" style="margin:-4px 0 10px">${S.fixMode ? '지울 장을 누르세요. 그 장의 가장 최근 읽은 기록 하나가 지워져요.' : '누른 채로 밀면 여러 장을 한 번에 고를 수 있어요'}</p>
       <div class="grid">${cells}</div></div>
     ${S.sel.size ? (S.fixMode ? unreadHtml() : confirmHtml()) : ''}`;
+}
+function outOfPlanHtml(pr){
+  const today = appToday();
+  if(today >= pr.start && today <= pr.end) return '';
+  const why = today < pr.start ? `목표가 ${ymd(pr.start)}부터 시작해서` : `목표가 ${ymd(pr.end)}에 끝나서`;
+  return `<div class="note warn-note" role="status"><span>${why} 오늘 체크한 장은 진행률에 들어가지 않아요.</span><button class="btn btn-sm btn-ghost" data-act="openPlan">기간 고치기</button></div>`;
 }
 function selDetail(){
   const groups = {};
@@ -920,6 +976,9 @@ function pageInquiry(){
   return subHead('문의하기') + `<div class="settings pad">
     <form class="panel" data-form="inquiry">
       <div class="field"><label class="label" for="inq-text">문의 내용</label><textarea id="inq-text" maxlength="1000" data-model="inq" placeholder="불편한 점, 바라는 기능, 신고할 내용을 자유롭게 적어주세요">${esc(S.draft.inq)}</textarea></div>
+      <div class="field"><span class="label">사진 <span class="hint" style="font-weight:400">최대 ${MAX_PHOTOS}장</span></span><div class="photo-row">
+        ${(S.draft.inqPhotos||[]).map((ph,i) => `<div class="photo-thumb"><img src="${ph.url}" alt="첨부한 사진 ${i+1}"><button type="button" class="rm" data-act="inqPhotoRm" data-i="${i}" aria-label="사진 ${i+1} 빼기">${I.x(14)}</button></div>`).join('')}
+        ${(S.draft.inqPhotos||[]).length < MAX_PHOTOS ? `<label class="photo-add">${I.plus(20)}<span>사진 넣기</span><input id="inq-photo" type="file" accept="image/*" multiple></label>` : ''}</div></div>
       <span class="hint">보내주신 내용은 개발자에게 전해져요.</span>
       <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>보내기</button></form></div>`;
 }
@@ -932,6 +991,7 @@ function pageInbox(){
       <div class="card-top"><div class="who"><span class="avatar">${esc((q.nickname||'?').slice(0,1))}</span><span class="name">${esc(q.nickname || '(별명 없음)')}</span><span class="time">${q.group_name ? esc(q.group_name)+' · ' : ''}${fmtDT(q.created_at)}</span></div>${!q.hidden && new Date(q.created_at).getTime() > seenAt ? '<span class="pill warn">새 문의</span>' : ''}</div>
       <span class="hint" style="user-select:all">${esc(q.email || '')}</span>
       <p class="content">${esc(q.content)}</p>
+      ${(S.inboxPhotos?.[q.id]||[]).length ? `<div class="photo-row">${S.inboxPhotos[q.id].map((ph,i) => `<button class="photo-thumb" data-act="viewPhoto" data-q="${q.id}" data-i="${i}" aria-label="첨부 사진 ${i+1} 크게 보기"><img src="${esc(ph.url)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
       <div class="row-actions"><button class="btn btn-sm btn-ghost" data-act="inqHide" data-id="${q.id}" data-v="${q.hidden ? '0' : '1'}">${q.hidden ? '다시 보이기' : '숨기기'}</button>
       <button class="btn btn-sm btn-ghost mod" style="margin-left:auto" data-act="inqDelete" data-id="${q.id}">삭제</button></div>
     </article>`).join('');
@@ -1007,12 +1067,14 @@ function pagePlan(){
   const total = (d.scope==='ALL' ? 1189 : d.scope==='OT' ? 929 : 260) * d.times;
   const span = d.end >= d.start ? daysBetween(d.start, d.end) + 1 : 0;
   const which = S.cal && (S.cal.target === 'planStart' || S.cal.target === 'planEnd') ? S.cal.target : null;
-  const cal = which === 'planStart' ? calHtml('planStart', d.start, null, d.end) : which === 'planEnd' ? calHtml('planEnd', d.end, d.start, null) : '';
+  const today = appToday();
+  const cal = which === 'planStart' ? calHtml('planStart', d.start, null, d.end < today ? d.end : today) : which === 'planEnd' ? calHtml('planEnd', d.end, d.start > today ? d.start : today, null) : '';
   return subHead('통독 목표') + `<div class="settings pad"><section class="panel">
       <div class="field"><span class="label">기간</span><div class="btn-row">
         <button type="button" class="date-btn ${which==='planStart'?'on':''}" data-act="openCal" data-v="planStart" aria-expanded="${which==='planStart'}">${I.cal(16)}<span class="num">${ymd(d.start)}</span></button>
         <button type="button" class="date-btn ${which==='planEnd'?'on':''}" data-act="openCal" data-v="planEnd" aria-expanded="${which==='planEnd'}">${I.cal(16)}<span class="num">${ymd(d.end)}</span></button></div>
-        ${which ? `<span class="hint">${which==='planStart' ? '시작일' : '종료일'}을 골라주세요</span>${cal}` : ''}</div>
+        ${which ? `<span class="hint">${which==='planStart' ? '시작일' : '종료일'}을 골라주세요</span>${cal}` : ''}
+        <span class="hint">오늘(${ymd(today)})이 기간 안에 있어야 지금 체크하는 장이 진행률에 들어가요.</span></div>
       <div class="field"><span class="label">범위</span><div class="seg three">${['OT','NT','ALL'].map(s => `<button class="${d.scope===s?'on':''}" data-act="planScope" data-v="${s}" aria-pressed="${d.scope===s}">${SCOPE_NAME[s]}</button>`).join('')}</div></div>
       <div class="between"><span class="label">통독 횟수</span><div class="stepper"><button data-act="planTimes" data-v="-1" aria-label="줄이기">−</button><b class="num">${d.times}회</b><button data-act="planTimes" data-v="1" aria-label="늘리기">+</button></div></div>
       <div class="calc num">${span ? `${total.toLocaleString('ko-KR')}장 · ${span}일 → 하루 약 <b>${ceil1(total/span)}장</b>` : '종료일이 시작일보다 늦어야 해요'}</div>
@@ -1182,7 +1244,7 @@ function render(){
   else html = ({pray:prayHtml, bible:bibleHtml, answers:answersHtml, me:meHtml}[S.tab])() + navHtml();
   const keep = {};
   app.querySelectorAll('[data-keep-scroll][id]').forEach(el => { keep[el.id] = el.scrollLeft; });
-  app.innerHTML = html + sheetHtml();
+  app.innerHTML = html + sheetHtml() + (S.viewPhoto ? `<div class="photo-view" data-act="closePhoto" role="dialog" aria-label="사진 크게 보기"><img src="${esc(S.viewPhoto)}" alt="첨부 사진"><button class="rm" data-act="closePhoto" aria-label="닫기">${I.x(22)}</button></div>` : '');
   app.querySelectorAll('[data-keep-scroll][id]').forEach(el => {
     if(el.id in keep) el.scrollLeft = keep[el.id];
     else { const on = el.querySelector('.chip.on'); if(on) el.scrollLeft = Math.max(0, on.offsetLeft - el.clientWidth/2 + on.offsetWidth/2); }
@@ -1222,7 +1284,10 @@ function errMsg(e){
 /* ─── 데이터 흐름 ─── */
 const unseenInquiries = () => { const t = Number(lsGet('inboxSeenAt') || 0); return S.inbox.filter(q => !q.hidden && new Date(q.created_at).getTime() > t).length; };
 async function loadInquiries(){
-  if(isSuper()){ try{ S.inbox = (await API.adminInquiries()) || []; }catch(e){ S.inbox = []; } } else S.inbox = [];
+  if(isSuper()){
+    try{ S.inbox = (await API.adminInquiries()) || []; }catch(e){ S.inbox = []; }
+    try{ S.inboxPhotos = await API.inquiryPhotos(S.inbox.map(q => q.id)); }catch(e){ S.inboxPhotos = {}; }
+  } else S.inbox = [];
 }
 function pickGroup(){
   if(!S.groups.some(g => g.id === S.groupId)){
@@ -1411,7 +1476,11 @@ const ACT = {
   },
   inboxView(d){ S.inboxView = d.v; render(); },
   inqHide(d){ const id = Number(d.id), hide = d.v === '1'; guard(async () => { await API.hideInquiry(id, hide); const q = S.inbox.find(x => x.id === id); if(q) q.hidden = hide; toast(hide ? '숨겼어요. 「숨긴 문의」에서 다시 볼 수 있어요' : '다시 보이게 했어요'); }); },
-  inqDelete(d){ const id = Number(d.id); askConfirm('이 문의를 삭제할까요?', '삭제하면 되돌릴 수 없어요. 나중에 다시 볼 수도 있다면 「숨기기」를 써 주세요.', '삭제', async () => { await API.deleteInquiry(id); S.inbox = S.inbox.filter(x => x.id !== id); toast('문의를 삭제했어요'); }); },
+  inqPhotoRm(d){ const ph = (S.draft.inqPhotos||[]).splice(Number(d.i), 1)[0]; if(ph) URL.revokeObjectURL(ph.url); render(); },
+  viewPhoto(d){ const ph = S.inboxPhotos?.[d.q]?.[Number(d.i)]; if(ph){ S.viewPhoto = ph.url; render(); } },
+  closePhoto(){ S.viewPhoto = null; render(); },
+  openPlan(){ S.tab = 'me'; S.page = 'plan'; S.draft.plan = null; S.cal = null; S.fixMode = false; S.sel.clear(); render(); window.scrollTo(0,0); },
+  inqDelete(d){ const id = Number(d.id); askConfirm('이 문의를 삭제할까요?', '삭제하면 되돌릴 수 없어요. 나중에 다시 볼 수도 있다면 「숨기기」를 써 주세요.', '삭제', async () => { const paths = (S.inboxPhotos?.[id] || []).map(p => p.path); await API.deleteInquiry(id); try{ await API.removeInquiryPhotos(paths); }catch(e){} S.inbox = S.inbox.filter(x => x.id !== id); toast('문의를 삭제했어요'); }); },
   pushOn(){ requestPushFromGesture(); render(); },
   pushOff(){ guard(async () => {
     try{ const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if(sub){ await API.removePush(sub.endpoint); await sub.unsubscribe(); } }catch(e){}
@@ -1423,6 +1492,9 @@ const ACT = {
   savePlan(){
     const d = S.draft.plan;
     if(!d.start || !d.end || d.end < d.start){ toast('종료일이 시작일보다 늦어야 해요'); return; }
+    const today = appToday();
+    if(d.start > today){ toast('시작일은 오늘이나 그 전으로 골라주세요'); return; }
+    if(d.end < today){ toast('종료일은 오늘이나 그 뒤로 골라주세요'); return; }
     guard(async () => { S.profile = await API.updateProfile({plan_start:d.start, plan_end:d.end, plan_scope:d.scope, plan_times:d.times}); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
   },
   prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
@@ -1516,7 +1588,16 @@ const FORMS = {
   inquiry(){
     const text = (S.draft.inq || '').trim();
     if(!text){ toast('문의 내용을 적어주세요'); return; }
-    guard(async () => { const row = await API.sendInquiry({content:text, group_id: S.groupId || null}); if(row?.id) API.notifyInquiry(row.id); S.draft.inq = ''; S.page = null; toast('개발자에게 전했어요. 소중한 의견 고마워요'); });
+    guard(async () => {
+      const photos = S.draft.inqPhotos || [];
+      const row = await API.sendInquiry({content:text, group_id: S.groupId || null});
+      let photoFail = false;
+      if(row?.id && photos.length){ try{ await API.uploadInquiryPhotos(row.id, photos.map(p => p.blob)); }catch(e){ photoFail = true; } }
+      if(row?.id) API.notifyInquiry(row.id);
+      photos.forEach(p => URL.revokeObjectURL(p.url));
+      S.draft.inq = ''; S.draft.inqPhotos = []; S.page = null;
+      toast(photoFail ? '내용은 전했지만 사진을 올리지 못했어요' : '개발자에게 전했어요. 소중한 의견 고마워요');
+    });
   },
   createGroup(){
     const name = (document.getElementById('new-group')?.value || '').trim();
@@ -1554,7 +1635,19 @@ document.addEventListener('change', e => {
   setTimeout(() => { const r = document.getElementById('font-range'); if(r){ r.scrollIntoView({block:'center'}); r.focus({preventScroll:true}); } }, 0);
 });
 document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.dataset.form]?.(); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.viewPhoto){ S.viewPhoto = null; render(); } else if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
+document.addEventListener('change', async e => {
+  if(e.target.id !== 'inq-photo') return;
+  const files = [...(e.target.files || [])]; e.target.value = '';
+  S.draft.inqPhotos = S.draft.inqPhotos || [];
+  const room = MAX_PHOTOS - S.draft.inqPhotos.length;
+  if(files.length > room) toast(`사진은 ${MAX_PHOTOS}장까지 넣을 수 있어요`);
+  for(const f of files.slice(0, Math.max(0, room))){
+    try{ const blob = await shrinkImage(f); S.draft.inqPhotos.push({blob, url:URL.createObjectURL(blob)}); }
+    catch(err){ toast('이 사진은 넣을 수 없어요. 다른 사진을 골라주세요'); }
+  }
+  render();
+});
 setInterval(() => { const a = document.activeElement; if(S.ready && S.session && S.tab === 'pray' && !S.sheet && !(a && /INPUT|TEXTAREA/.test(a.tagName))) render(); }, 30000);
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') checkForUpdate(); });
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.session && S.profile && !S.sheet) loadGroupData().then(render).catch(()=>{}); });
@@ -1703,5 +1796,4 @@ document.addEventListener('pointerup', e => { if(e.pointerType === 'mouse') drag
 start();
 </script>
 
-</body>
-</html>
+</body></html>

@@ -629,3 +629,19 @@ revoke all on function public.has_push_subscription(text) from public, anon;
 grant execute on function public.save_push_subscription(text, text, text) to authenticated;
 grant execute on function public.remove_push_subscription(text) to authenticated;
 grant execute on function public.has_push_subscription(text) to authenticated;
+
+-- ─── 문의 사진 첨부 (비공개 저장소, 총 관리자만 보기) ───
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('inquiry-photos', 'inquiry-photos', false, 5242880, array['image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do nothing;
+create table if not exists public.inquiry_photos (
+  id bigint generated always as identity primary key,
+  inquiry_id bigint not null references public.inquiries(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  path text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists inquiry_photos_inquiry_idx on public.inquiry_photos(inquiry_id);
+alter table public.inquiry_photos enable row level security;
+-- 정책: 본인이 10분 안에 쓴 문의에만 추가 / 총 관리자만 읽기
+-- storage.objects: 본인 폴더(<user id>/...)에만 올리기, 총 관리자만 읽기·삭제
