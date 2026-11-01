@@ -581,3 +581,51 @@ begin
 end $$;
 revoke all on function public.delete_my_account(text) from public, anon;
 grant execute on function public.delete_my_account(text) to authenticated;
+
+-- ─── 푸시 알림 (총 관리자에게 새 문의 알림) ───
+create table if not exists public.push_subscriptions (
+  endpoint text primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_subscriptions_user_idx on public.push_subscriptions (user_id);
+alter table public.push_subscriptions enable row level security;
+revoke all on public.push_subscriptions from anon, authenticated;
+
+-- 서버 함수만 읽는 비밀 저장소 (VAPID 키). 값은 SQL Editor에서 따로 넣어요.
+create table if not exists public.app_secrets (key text primary key, value text not null);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;
+
+create table if not exists public.inquiry_notified (
+  inquiry_id bigint primary key references public.inquiries(id) on delete cascade,
+  notified_at timestamptz not null default now()
+);
+alter table public.inquiry_notified enable row level security;
+revoke all on public.inquiry_notified from anon, authenticated;
+
+create or replace function public.save_push_subscription(p_endpoint text, p_p256dh text, p_auth text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'NOT_ALLOWED'; end if;
+  if coalesce(p_endpoint, '') !~ '^https://' or length(p_endpoint) > 1000 then raise exception 'BAD_SUBSCRIPTION'; end if;
+  insert into push_subscriptions (endpoint, user_id, p256dh, auth)
+  values (p_endpoint, auth.uid(), p_p256dh, p_auth)
+  on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, created_at = now();
+end $$;
+create or replace function public.remove_push_subscription(p_endpoint text) returns void
+language sql security definer set search_path = public as $$
+  delete from push_subscriptions where endpoint = p_endpoint and user_id = auth.uid()
+$$;
+create or replace function public.has_push_subscription(p_endpoint text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from push_subscriptions where endpoint = p_endpoint and user_id = auth.uid())
+$$;
+revoke all on function public.save_push_subscription(text, text, text) from public, anon;
+revoke all on function public.remove_push_subscription(text) from public, anon;
+revoke all on function public.has_push_subscription(text) from public, anon;
+grant execute on function public.save_push_subscription(text, text, text) to authenticated;
+grant execute on function public.remove_push_subscription(text) to authenticated;
+grant execute on function public.has_push_subscription(text) to authenticated;
