@@ -332,6 +332,7 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
+const APP_VERSION = '2026.11.01-1827';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -461,7 +462,9 @@ function supabaseApi(){
     savePush: (endpoint, p256dh, auth) => rpc('save_push_subscription', {p_endpoint:endpoint, p_p256dh:p256dh, p_auth:auth}),
     removePush: endpoint => rpc('remove_push_subscription', {p_endpoint:endpoint}),
     hasPush: endpoint => rpc('has_push_subscription', {p_endpoint:endpoint}),
-    adminInquiries: () => rpc('admin_inquiries'),
+    adminInquiries: () => rpc('admin_inquiries_v2'),
+    hideInquiry: (id, hidden) => rpc('admin_set_inquiry_hidden', {p_id:id, p_hidden:hidden}),
+    deleteInquiry: id => rpc('admin_delete_inquiry', {p_id:id}),
     todayReaders: g => rpc('group_today_readers', {p_group:g}),
   };
 }
@@ -579,7 +582,9 @@ function demoApi(){
     async sendInquiry(o){ db.inquiries = db.inquiries || []; const id = Date.now(); db.inquiries.push({id, user_id:ME, created_at:new Date().toISOString(), ...o}); save(); return {id}; },
     async notifyInquiry(){ },
     async savePush(){ }, async removePush(){ }, async hasPush(){ return false; },
-    async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at})).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
+    async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at, hidden:!!q.hidden})).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
+    async hideInquiry(id, hidden){ if(!db.profile.is_super_admin) deny(); const q = (db.inquiries||[]).find(x => x.id === id); if(q) q.hidden = hidden; save(); },
+    async deleteInquiry(id){ if(!db.profile.is_super_admin) deny(); db.inquiries = (db.inquiries||[]).filter(x => x.id !== id); save(); },
     async reset(){ db = seed(); save(); S.session = sess(); }
   };
 }
@@ -900,8 +905,9 @@ function meHtml(){
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${fontLabel()}`,'data-v="theme"')}</div></section>
     <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
-    ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
+    ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.filter(q => !q.hidden).length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
+    <p class="hint" style="text-align:center;margin:0">버전 ${APP_VERSION}</p>
   </div>`;
 }
 const fmtDT = ts => { const d = kstDate(ts); const t = new Date(new Date(ts).getTime() + 9*HOUR).toISOString().slice(11,16); return `${md(d)} ${t}`; };
@@ -915,12 +921,19 @@ function pageInquiry(){
 }
 function pageInbox(){
   const seenAt = Number(lsGet('inboxSeenAt') || 0);
-  const list = S.inbox.map(q => `<article class="card">
-      <div class="card-top"><div class="who"><span class="avatar">${esc((q.nickname||'?').slice(0,1))}</span><span class="name">${esc(q.nickname || '(별명 없음)')}</span><span class="time">${q.group_name ? esc(q.group_name)+' · ' : ''}${fmtDT(q.created_at)}</span></div>${new Date(q.created_at).getTime() > seenAt ? '<span class="pill warn">새 문의</span>' : ''}</div>
+  const showHidden = S.inboxView === 'hidden';
+  const shown = S.inbox.filter(q => !!q.hidden === showHidden);
+  const nVisible = S.inbox.filter(q => !q.hidden).length, nHidden = S.inbox.length - nVisible;
+  const list = shown.map(q => `<article class="card">
+      <div class="card-top"><div class="who"><span class="avatar">${esc((q.nickname||'?').slice(0,1))}</span><span class="name">${esc(q.nickname || '(별명 없음)')}</span><span class="time">${q.group_name ? esc(q.group_name)+' · ' : ''}${fmtDT(q.created_at)}</span></div>${!q.hidden && new Date(q.created_at).getTime() > seenAt ? '<span class="pill warn">새 문의</span>' : ''}</div>
       <span class="hint" style="user-select:all">${esc(q.email || '')}</span>
       <p class="content">${esc(q.content)}</p>
+      <div class="row-actions"><button class="btn btn-sm btn-ghost" data-act="inqHide" data-id="${q.id}" data-v="${q.hidden ? '0' : '1'}">${q.hidden ? '다시 보이기' : '숨기기'}</button>
+      <button class="btn btn-sm btn-ghost mod" style="margin-left:auto" data-act="inqDelete" data-id="${q.id}">삭제</button></div>
     </article>`).join('');
-  return subHead('받은 문의') + `<div class="settings pad">${pushPanel()}${list ? `<div class="list" style="padding:0">${list}</div>` : '<p class="empty">아직 받은 문의가 없어요.</p>'}</div>`;
+  const seg = `<div class="seg"><button class="${!showHidden?'on':''}" data-act="inboxView" data-v="visible" aria-pressed="${!showHidden}">받은 문의 <span class="num">${nVisible}</span></button><button class="${showHidden?'on':''}" data-act="inboxView" data-v="hidden" aria-pressed="${showHidden}">숨긴 문의 <span class="num">${nHidden}</span></button></div>`;
+  const empty = showHidden ? '숨긴 문의가 없어요.' : '아직 받은 문의가 없어요.';
+  return subHead('받은 문의') + `<div class="settings pad">${pushPanel()}${seg}${list ? `<div class="list" style="padding:0">${list}</div>` : `<p class="empty">${empty}</p>`}</div>`;
 }
 const isStandalone = () => { try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } };
 const deviceKind = () => { const ua = navigator.userAgent || ''; if(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios'; if(/Android/.test(ua)) return 'android'; return 'other'; };
@@ -1203,7 +1216,7 @@ function errMsg(e){
 }
 
 /* ─── 데이터 흐름 ─── */
-const unseenInquiries = () => { const t = Number(lsGet('inboxSeenAt') || 0); return S.inbox.filter(q => new Date(q.created_at).getTime() > t).length; };
+const unseenInquiries = () => { const t = Number(lsGet('inboxSeenAt') || 0); return S.inbox.filter(q => !q.hidden && new Date(q.created_at).getTime() > t).length; };
 async function loadInquiries(){
   if(isSuper()){ try{ S.inbox = (await API.adminInquiries()) || []; }catch(e){ S.inbox = []; } } else S.inbox = [];
 }
@@ -1250,6 +1263,8 @@ async function start(){
   if(S.theme !== 'system') applyTheme();
   applyFontScale();
   registerSW();
+  if(location.search.includes('v=')){ try{ history.replaceState(null, '', location.pathname + location.hash); }catch(e){} }
+  checkForUpdate();
   try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(S.theme === 'system') withThemeTransition(() => {}); }); }catch(e){}
   render();
   try{ await API.init(); S.fatal = ''; }
@@ -1390,6 +1405,9 @@ const ACT = {
     const done = () => toast(`입장 코드 ${d.v}를 복사했어요`);
     try{ navigator.clipboard.writeText(d.v).then(done, () => toast(`입장 코드: ${d.v}`)); }catch(e){ toast(`입장 코드: ${d.v}`); }
   },
+  inboxView(d){ S.inboxView = d.v; render(); },
+  inqHide(d){ const id = Number(d.id), hide = d.v === '1'; guard(async () => { await API.hideInquiry(id, hide); const q = S.inbox.find(x => x.id === id); if(q) q.hidden = hide; toast(hide ? '숨겼어요. 「숨긴 문의」에서 다시 볼 수 있어요' : '다시 보이게 했어요'); }); },
+  inqDelete(d){ const id = Number(d.id); askConfirm('이 문의를 삭제할까요?', '삭제하면 되돌릴 수 없어요. 나중에 다시 볼 수도 있다면 「숨기기」를 써 주세요.', '삭제', async () => { await API.deleteInquiry(id); S.inbox = S.inbox.filter(x => x.id !== id); toast('문의를 삭제했어요'); }); },
   pushOn(){ requestPushFromGesture(); render(); },
   pushOff(){ guard(async () => {
     try{ const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if(sub){ await API.removePush(sub.endpoint); await sub.unsubscribe(); } }catch(e){}
@@ -1534,12 +1552,31 @@ document.addEventListener('change', e => {
 document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.dataset.form]?.(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
 setInterval(() => { const a = document.activeElement; if(S.ready && S.session && S.tab === 'pray' && !S.sheet && !(a && /INPUT|TEXTAREA/.test(a.tagName))) render(); }, 30000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') checkForUpdate(); });
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.session && S.profile && !S.sheet) loadGroupData().then(render).catch(()=>{}); });
 
 /* ─── 푸시 알림 (총 관리자: 새 문의) ─── */
 const PUSH = {state:'unknown', busy:false};
 const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 function b64urlToBytes(s){ const p = '='.repeat((4 - s.length % 4) % 4); const b = atob((s + p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+// 새 버전이 올라왔으면 스스로 새로고침해요 (홈 화면 앱이 예전 화면을 붙들고 있지 않게)
+let versionChecking = false;
+async function checkForUpdate(){
+  if(IS_DEMO || versionChecking || !navigator.onLine) return;
+  versionChecking = true;
+  try{
+    const r = await fetch('version.txt?t=' + Date.now(), {cache:'no-store'});
+    if(r.ok){
+      const v = (await r.text()).trim();
+      const busyTyping = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+      if(v && v !== APP_VERSION && !S.sheet && !busyTyping && !S.sel.size){
+        const guardKey = 'reloadedFor';
+        if(lsGet(guardKey) !== v){ lsSet(guardKey, v); location.replace(location.pathname + '?v=' + encodeURIComponent(v)); return; }
+      }
+    }
+  }catch(e){}
+  versionChecking = false;
+}
 function registerSW(){ if(IS_DEMO || !('serviceWorker' in navigator)) return; navigator.serviceWorker.register('sw.js').catch(() => {}); }
 async function refreshPushState(){
   if(IS_DEMO){ PUSH.state = 'demo'; return; }
