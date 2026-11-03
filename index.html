@@ -204,6 +204,8 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 /* bible */
 .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px;gap:4px;border-radius:12px;background:var(--soft)}
 .seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg.four{grid-template-columns:repeat(4,minmax(0,1fr))}.seg.four button{font-size:13px;padding-inline:2px}
+.book-pick .link-btn{color:var(--accent-ink)}
 .seg button{min-height:40px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-size:14px;font-weight:500}
 .seg button.on{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 3px var(--shadow)}
 .bible-head{padding-block:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -212,6 +214,49 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .big{margin:0;font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.1}
 .bar{height:8px;border-radius:4px;background:var(--accent-tint);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.daily{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.daily span:first-child{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.daily b{color:var(--fg)}
+.daily .dbar{flex:1;height:6px;border-radius:3px;background:var(--accent-tint);overflow:hidden}
+.daily .dbar i{display:block;height:100%;background:#F2994A;border-radius:3px}
+.daily.met{color:var(--accent-ink)}.daily.met svg{color:var(--accent)}.daily.met .dbar i{background:var(--accent)}
+.rec-sum{margin:0;font-size:13px;color:var(--muted)}.rec-sum b{color:var(--fg)}
+.rec-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.rec-grid .wd{text-align:center;font-size:11px;color:var(--faint)}.rec-grid .wd.sun{color:var(--warn)}
+.rd{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:13px;border:1.5px solid transparent;line-height:1}
+.rd small{font-size:9px;opacity:.8}
+.rd.met{background:var(--accent);color:var(--surface);font-weight:700}
+.rd.part{background:var(--accent-tint);color:var(--accent-ink)}
+.rd.miss{border-color:var(--chip-line);color:var(--muted)}
+.rd.none,.rd.future{color:var(--faint)}
+.rd.today{box-shadow:0 0 0 2px var(--fg) inset}
+.cheer{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55}
+.cheer p{margin:0}
+.cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
+.cheer.praise{background:var(--accent-tint);color:var(--fg)}.cheer.praise .cheer-ic{background:var(--accent);color:var(--surface)}
+.cheer.motivate{background:color-mix(in srgb,#8E6BD8 14%,var(--surface));color:var(--fg)}.cheer.motivate .cheer-ic{background:#8E6BD8;color:#fff}
+.cheer.encourage{background:color-mix(in srgb,#F2994A 16%,var(--surface));color:var(--fg)}.cheer.encourage .cheer-ic{background:#F2994A;color:#fff}
+.rec-months .star{display:inline-flex;vertical-align:-2px;color:var(--accent);font-style:normal}
+.rec-legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.rec-legend span{display:inline-flex;align-items:center;gap:5px}
+.rec-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.rec-legend i.met{background:var(--accent)}.rec-legend i.part{background:var(--accent-tint)}.rec-legend i.miss{border:1.5px solid var(--chip-line)}
+.rec-months{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:2px}
+.rec-months button{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 2px;border:0;border-bottom:1px solid var(--line);background:none;font-size:14px;color:var(--fg);text-align:left}
+.rec-months button:last-child{border-bottom:0}
+.rec-months button .num{font-size:13px;color:var(--muted)}.rec-months button b{color:var(--fg)}
+.rec-months button.on span:first-child{font-weight:800;color:var(--accent-ink)}
+.ach-list{display:flex;flex-direction:column;gap:10px}
+.ach{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--soft)}
+.ach-ic{width:34px;height:34px;border-radius:17px;background:var(--accent);color:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ach div{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ach div b{font-size:14px}.ach div span{font-size:12px;color:var(--muted)}
+.ach-on{font-size:12px;color:var(--accent-ink);font-weight:700;text-align:right;line-height:1.4}
+.book-pick{display:flex;flex-direction:column;gap:10px}
+.book-pick .bp-head{display:flex;justify-content:space-between;align-items:center}
+.book-pick .bp-head b{font-size:14px}
+.book-pick .bp-grid{display:flex;flex-wrap:wrap;gap:6px}
+.book-pick .chip{height:34px;padding:0 12px;font-size:13px}
 .readers{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .readers b{color:var(--accent-ink)}
 .stack{display:flex}
@@ -294,7 +339,7 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .inline input{flex:1;min-width:0}
 .stepper{display:flex;align-items:center;gap:4px}
 .stepper b{min-width:48px;text-align:center;font-size:18px;font-weight:800}
-.stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--chip-line);background:var(--surface);font-size:20px}
+.stepper button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--chip-line);background:var(--surface);font-size:20px}
 .calc{padding:12px 14px;border-radius:12px;background:var(--soft);font-size:13px;line-height:1.5;color:var(--muted)}
 .calc b{color:var(--fg)}
 .between{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -384,7 +429,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.03-1040';
+const APP_VERSION = '2026.11.04-0100';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -432,8 +477,57 @@ function shrinkImage(file, max = 1600){
     img.src = url;
   });
 }
+function planBookSet(profile){
+  const ids = Array.isArray(profile.plan_books) && profile.plan_books.length ? profile.plan_books.map(Number) : null;
+  const scope = profile.plan_scope || 'ALL';
+  return new Set(ids || BOOKS.filter(b => scope === 'ALL' || b.t === scope).map(b => b.id));
+}
+function booksLabel(set){
+  const ids = BOOKS.filter(b => set.has(b.id));
+  const ot = ids.filter(b => b.t === 'OT').length, nt = ids.length - ot;
+  if(ot === 39 && nt === 27) return '신구약';
+  if(ot === 39 && nt === 0) return '구약';
+  if(ot === 0 && nt === 27) return '신약';
+  if(ids.length === 1) return ids[0].name;
+  if(ids.length === 2) return `${ids[0].name}·${ids[1].name}`;
+  return `${ids[0].name} 외 ${ids.length-1}권`;
+}
+function planKey(p){ return Array.isArray(p.plan_books) && p.plan_books.length ? p.plan_books.map(Number).sort((a,b) => a-b).join(',') : (p.plan_scope || 'ALL'); }
+function completionDate(profile, readings){
+  const pr = computeProgress(profile, readings);
+  if(pr.remaining > 0 || !pr.total) return null;
+  const rs = readings.filter(r => r.read_on >= pr.start && r.read_on <= pr.end && pr.bookSet.has(Number(r.book)))
+    .sort((a,b) => a.read_on < b.read_on ? -1 : a.read_on > b.read_on ? 1 : Number(a.id) - Number(b.id));
+  const c = new Map(); let done = 0;
+  for(const r of rs){ const k = r.book+'-'+r.chapter, n = (c.get(k)||0) + 1; c.set(k, n); if(n <= pr.times && ++done >= pr.total) return r.read_on; }
+  return appToday();
+}
+async function loadRecords(){
+  try{ const [a,h] = await Promise.all([API.loadAchievements(), API.loadGoalHistory()]); S.achievements = a || []; S.goalHist = h || []; }
+  catch(e){ S.achievements = S.achievements || []; S.goalHist = S.goalHist || []; }
+  if(Number(S.profile?.plan_daily) > 0 && !S.goalHist.length){ try{ await API.setDailyGoal(Number(S.profile.plan_daily)); S.goalHist = await API.loadGoalHistory() || []; }catch(e){} }
+}
+async function syncAchievement(){
+  const p = S.profile, on = completionDate(p, S.readings);
+  if(!on) return false;
+  const key = planKey(p), times = Number(p.plan_times) || 1;
+  if((S.achievements||[]).some(a => a.plan_start === p.plan_start && a.plan_end === p.plan_end && Number(a.plan_times) === times && a.books_key === key)) return false;
+  const pr = computeProgress(p, S.readings);
+  try{
+    await API.addAchievement({plan_start:p.plan_start, plan_end:p.plan_end, plan_times:times, books_key:key, label:`${booksLabel(pr.bookSet)} ${times}회`, chapters:pr.total, completed_on:on});
+    S.achievements = await API.loadAchievements() || [];
+    return true;
+  }catch(e){ return false; }
+}
+function finishDate(remaining, daily, today, start, todayCount){
+  if(!(daily > 0) || remaining <= 0) return null;
+  if(today < start) return addDays(start, Math.ceil(remaining / daily) - 1);
+  const rest = remaining - Math.max(0, daily - todayCount);
+  return rest <= 0 ? today : addDays(today, Math.ceil(rest / daily));
+}
 function computeProgress(profile, readings){
   const start = profile.plan_start, end = profile.plan_end, times = profile.plan_times || 1, scope = profile.plan_scope || 'ALL';
+  const bookSet = planBookSet(profile), daily = Number(profile.plan_daily) || 0;
   const counts = new Map(); const today = appToday(); let todayCount = 0;
   for(const r of readings){
     if(r.read_on === today) todayCount++;
@@ -441,14 +535,15 @@ function computeProgress(profile, readings){
   }
   let done = 0, total = 0;
   for(const b of BOOKS){
-    if(scope !== 'ALL' && b.t !== scope) continue;
+    if(!bookSet.has(b.id)) continue;
     total += b.c*times;
     for(let c=1;c<=b.c;c++) done += Math.min(counts.get(b.id+'-'+c)||0, times);
   }
   let daysLeft;
   if(today > end) daysLeft = 0; else if(today < start) daysLeft = daysBetween(start,end)+1; else daysLeft = daysBetween(today,end)+1;
   const remaining = total - done;
-  return {counts, done, total, remaining, pct: total ? done/total*100 : 0, daysLeft, perDay: daysLeft>0 ? remaining/daysLeft : 0, todayCount, start, end, times, scope};
+  return {counts, done, total, remaining, pct: total ? done/total*100 : 0, daysLeft, perDay: daysLeft>0 ? remaining/daysLeft : 0, todayCount, start, end, times, scope, bookSet, daily,
+    finishOn: finishDate(remaining, daily, today, start, todayCount)};
 }
 
 /* ─── 상태 ─── */
@@ -525,6 +620,11 @@ function supabaseApi(){
     addReadings: list => sb.from('readings').insert(list).then(chk),
     deleteReadings: ids => sb.from('readings').delete().in('id', ids).then(chk),
     loadBoard: g => rpc('reading_board', {p_group:g}),
+    loadAchievements: () => sb.from('plan_achievements').select('*').order('completed_on', {ascending:false}).then(chk),
+    addAchievement: o => sb.from('plan_achievements').upsert({...o, user_id:uid()}, {onConflict:'user_id,plan_start,plan_end,plan_times,books_key', ignoreDuplicates:true}).then(chk),
+    deleteAchievement: id => sb.from('plan_achievements').delete().eq('id', id).then(chk),
+    loadGoalHistory: () => sb.from('daily_goal_history').select('set_on,goal').order('set_on').then(chk),
+    setDailyGoal: goal => sb.from('daily_goal_history').upsert({user_id:uid(), set_on:appToday(), goal}, {onConflict:'user_id,set_on'}).then(chk),
     sendInquiry: o => sb.from('inquiries').insert(o).select('id').single().then(chk),
     async uploadInquiryPhotos(inquiryId, blobs){
       for(let i=0;i<blobs.length;i++){
@@ -651,6 +751,11 @@ function demoApi(){
     async deletePrayer(id){ db.prayers = db.prayers.filter(x => x.id !== id); db.marks = db.marks.filter(m => m.id !== id); save(); },
     async modDelete(id){ const p = db.prayers.find(x => x.id === id); if(!p) return; if(!(p.user_id === ME || canMod(p.group_id))) deny(); return this.deletePrayer(id); },
     async loadReadings(){ return db.readings.slice(); },
+    async loadAchievements(){ return (db.achievements||[]).slice().sort((a,b) => a.completed_on < b.completed_on ? 1 : -1); },
+    async addAchievement(o){ db.achievements = db.achievements || []; if(!db.achievements.some(a => a.plan_start===o.plan_start && a.plan_end===o.plan_end && a.plan_times===o.plan_times && a.books_key===o.books_key)) db.achievements.push({id:Date.now(), ...o}); save(); },
+    async deleteAchievement(id){ db.achievements = (db.achievements||[]).filter(a => a.id !== id); save(); },
+    async loadGoalHistory(){ return (db.goalHist||[]).slice().sort((a,b) => a.set_on < b.set_on ? -1 : 1); },
+    async setDailyGoal(goal){ db.goalHist = (db.goalHist||[]).filter(h => h.set_on !== appToday()); db.goalHist.push({set_on:appToday(), goal}); save(); },
     async addReadings(list){ const d = appToday(), base = Date.now(); list.forEach((r,i) => db.readings.push({id:base+i, book:r.book, chapter:r.chapter, read_on:d})); save(); },
     async deleteReadings(ids){ const set = new Set(ids); db.readings = db.readings.filter(r => !set.has(r.id)); save(); },
     async loadBoard(g){
@@ -839,26 +944,33 @@ function bibleHtml(){
 function planLabel(pr){
   const y1 = pr.start.slice(0,4), y2 = pr.end.slice(0,4);
   const period = (pr.start.endsWith('-01-01') && pr.end.endsWith('-12-31') && y1===y2) ? `${y1}년` : `${ymd(pr.start)} – ${ymd(pr.end)}`;
-  return `${period} · ${SCOPE_NAME[pr.scope]} ${pr.times}회`;
+  return `${period} · ${booksLabel(pr.bookSet)} ${pr.times}회`;
 }
+function dailyHtml(pr){
+  if(!pr.daily) return '';
+  const met = pr.todayCount >= pr.daily, w = Math.min(100, pr.todayCount / pr.daily * 100);
+  return `<div class="daily ${met ? 'met' : ''}"><span>${met ? I.check(15) : ''}오늘 목표 <b class="num">${pr.todayCount} / ${fmtN(pr.daily)}장</b>${met ? ' · 다 읽었어요' : ''}</span><span class="dbar"><i style="width:${w}%"></i></span></div>`;
+}
+const fmtN = n => Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1);
 function readersHtml(){
   if(!curGroup()) return '';
   const n = S.todayReaders;
   return `<div class="readers">${I.users(16)}${n ? `<span>${esc(curGroup().name)}에서 오늘 <b class="num">${n}명</b>이 읽었어요</span>` : `<span>${esc(curGroup().name)}에서 오늘은 아직 읽은 사람이 없어요</span>`}</div>`;
 }
 function checkHtml(pr){
-  const testaments = pr.scope === 'ALL' ? ['OT','NT'] : [pr.scope];
+  const testaments = ['OT','NT'].filter(t => BOOKS.some(b => b.t === t && pr.bookSet.has(b.id)));
   if(S.jumpToLast || S.bookId == null){
     S.jumpToLast = false;
-    const last = S.readings.filter(r => testaments.includes(BOOK[r.book]?.t)).reduce((a, r) => (!a || Number(r.id) > Number(a.id)) ? r : a, null);
-    if(last){ S.testament = BOOK[last.book].t; S.bookId = last.book; S.scrollToCh = last.book + '-' + last.chapter; }
+    const only = S.jumpTestament; S.jumpTestament = null;
+    const last = S.readings.filter(r => pr.bookSet.has(Number(r.book)) && (!only || BOOK[r.book]?.t === only)).reduce((a, r) => (!a || Number(r.id) > Number(a.id)) ? r : a, null);
+    if(last){ S.testament = BOOK[last.book].t; S.bookId = last.book; if(!only) S.scrollToCh = last.book + '-' + last.chapter; }
   }
   if(!testaments.includes(S.testament)) S.testament = testaments[0];
-  const books = BOOKS.filter(b => b.t === S.testament);
+  const books = BOOKS.filter(b => b.t === S.testament && pr.bookSet.has(b.id));
   const doneIn = b => { let n = 0; for(let c=1;c<=b.c;c++) if((pr.counts.get(b.id+'-'+c)||0) >= pr.times) n++; return n; };
   if(!books.some(b => b.id === S.bookId)){ const next = books.find(b => doneIn(b) < b.c) || books[0]; S.bookId = next.id; }
   const book = BOOK[S.bookId];
-  const tabs = testaments.length > 1 ? `<div class="seg">${testaments.map(t => `<button class="${S.testament===t?'on':''}" data-act="testament" data-v="${t}" aria-pressed="${S.testament===t}">${SCOPE_NAME[t]} ${t==='OT'?39:27}권</button>`).join('')}</div>` : '';
+  const tabs = testaments.length > 1 ? `<div class="seg">${testaments.map(t => `<button class="${S.testament===t?'on':''}" data-act="testament" data-v="${t}" aria-pressed="${S.testament===t}">${SCOPE_NAME[t]} ${BOOKS.filter(b => b.t === t && pr.bookSet.has(b.id)).length}권</button>`).join('')}</div>` : '';
   const started = b => { for(let c=1;c<=b.c;c++) if(pr.counts.get(b.id+'-'+c)) return true; return false; };
   const chips = books.map(b => { const full = doneIn(b) === b.c; return `<button class="chip ${b.id===S.bookId?'on':(full?'full':started(b)?'part':'')}" data-act="book" data-v="${b.id}" aria-pressed="${b.id===S.bookId}">${b.name}${full ? I.check(14) : ''}</button>`; }).join('');
   let cells = '';
@@ -878,6 +990,7 @@ function checkHtml(pr){
       <div class="goal-row"><div><div class="eyebrow">${planLabel(pr)}</div><p class="big num">${floor1(pr.pct)}%</p></div>
         <span class="count num"><b>${pr.done.toLocaleString('ko-KR')}</b> / ${pr.total.toLocaleString('ko-KR')}장</span></div>
       <div class="bar"><i style="width:${Math.min(100,pr.pct)}%"></i></div>
+      ${dailyHtml(pr)}
       ${readersHtml()}
       ${outOfPlanHtml(pr)}
       ${tabs}
@@ -919,7 +1032,7 @@ function statsHtml(pr){
   const perDayCount = Object.fromEntries(days.map(d => [d,0]));
   S.readings.forEach(r => { if(r.read_on in perDayCount) perDayCount[r.read_on]++; });
   const vals = days.map(d => perDayCount[d]), weekTotal = vals.reduce((a,b)=>a+b,0);
-  const per = pr.perDay, scaleMax = Math.max(1, ...vals, per);
+  const per = pr.daily || pr.perDay, scaleMax = Math.max(1, ...vals, per);
   const H = 100;
   const cols = days.map((d,i) => `<div class="col ${d===today?'today':''}"><span class="num">${vals[i]}</span><i style="height:${Math.round(vals[i]/scaleMax*H)}px"></i></div>`).join('');
   const dayLabels = days.map(d => `<span class="${d===today?'today':''}">${d===today ? '오늘' : weekday(d)}</span>`).join('');
@@ -927,6 +1040,10 @@ function statsHtml(pr){
   let goalText;
   if(pr.remaining <= 0) goalText = `<span class="eyebrow">목표 달성</span><span class="per">완독!</span><p>${planLabel(pr)} 목표를 이뤘어요.</p>`;
   else if(pr.daysLeft === 0) goalText = `<span class="eyebrow">기간이 끝났어요</span><span class="per num">${floor1(pr.pct)}%</span><p>남은 ${pr.remaining.toLocaleString('ko-KR')}장 · 내 정보에서 기간을 늘릴 수 있어요</p>`;
+  else if(pr.daily){
+    const late = pr.finishOn && pr.finishOn > pr.end ? daysBetween(pr.end, pr.finishOn) : 0;
+    goalText = `<span class="eyebrow">나의 하루 목표</span><span class="per num">${fmtN(pr.daily)}장</span><p class="num">오늘 읽은 분량 <b>${pr.todayCount} / ${fmtN(pr.daily)}장</b><br>이대로 읽으면 <b>${md(pr.finishOn)}</b>에 끝나요${late ? `<br><span style="color:var(--warn)">목표 기간보다 ${late}일 늦어요 · 기간 안에 끝내려면 하루 ${ceil1(pr.perDay)}장</span>` : ''}</p>`;
+  }
   else goalText = `<span class="eyebrow">목표까지 하루에</span><span class="per num">${ceil1(per)}장</span><p class="num">남은 ${floor1(100-pr.pct)}% · ${pr.remaining.toLocaleString('ko-KR')}장 · ${pr.daysLeft}일<br>오늘 읽은 분량 <b>${pr.todayCount} / ${ceil1(per)}장</b></p>`;
   const g = curGroup();
   const board = S.board.map(b => `<div class="${b.is_me?'me':''}"><span class="nm">${esc(b.nickname)}</span><span class="bar"><i style="width:${Math.min(100,b.pct)}%"></i></span><span class="pc num">${Number(b.pct).toFixed(1)}%</span></div>`).join('');
@@ -943,8 +1060,64 @@ function statsHtml(pr){
       <div class="panel-head"><h2>최근 7일 읽은 성경</h2><span class="count num">${md(days[0])} – ${md(today)} · <b>${weekTotal}장</b></span></div>
       <div class="chart" role="img" aria-label="요일별 읽은 장 수: ${days.map((d,i)=>`${weekday(d)} ${vals[i]}장`).join(', ')}">${target}${cols}</div>
       <div class="days">${dayLabels}</div>
-      ${per > 0 ? `<span class="legend"><i></i>목표 페이스 하루 ${ceil1(per)}장</span>` : ''}
-    </section>${boardPanel}</div>`;
+      ${per > 0 ? `<span class="legend"><i></i>${pr.daily ? `하루 목표 ${fmtN(pr.daily)}장` : `목표 페이스 하루 ${ceil1(per)}장`}</span>` : ''}
+    </section>${monthlyHtml()}${achievementsHtml()}${boardPanel}</div>`;
+}
+function goalFor(ds){ let g = null; for(const h of (S.goalHist||[])){ if(h.set_on <= ds) g = Number(h.goal) || null; else break; } return g; }
+function monthlyHtml(){
+  const hist = S.goalHist || [], first = hist.find(h => Number(h.goal) > 0);
+  if(!first) return '';
+  const today = appToday(), firstMonth = first.set_on.slice(0,7), thisMonth = today.slice(0,7);
+  if(!S.recMonth || S.recMonth < firstMonth || S.recMonth > thisMonth) S.recMonth = thisMonth;
+  const counts = {}; S.readings.forEach(r => { counts[r.read_on] = (counts[r.read_on]||0) + 1; });
+  const monthStat = ym => { const [y,m] = ym.split('-').map(Number), n = new Date(Date.UTC(y,m,0)).getUTCDate(); let met = 0, goalDays = 0, ch = 0, goalSum = 0, goalCh = 0;
+    for(let d=1; d<=n; d++){ const ds = `${ym}-${pad2(d)}`; ch += counts[ds] || 0; if(ds > today) continue; const g = goalFor(ds); if(!g) continue; goalDays++; goalSum += g; goalCh += counts[ds] || 0; if((counts[ds]||0) >= g) met++; }
+    return {met, goalDays, ch, goalSum, goalCh}; };
+  const [y,m] = S.recMonth.split('-').map(Number), n = new Date(Date.UTC(y,m,0)).getUTCDate(), lead = new Date(Date.UTC(y,m-1,1)).getUTCDay();
+  let cells = WD.map((w,i) => `<span class="wd ${i===0?'sun':''}" aria-hidden="true">${w}</span>`).join('') + '<span></span>'.repeat(lead);
+  for(let d=1; d<=n; d++){
+    const ds = `${S.recMonth}-${pad2(d)}`, c = counts[ds] || 0, g = ds > today ? null : goalFor(ds);
+    const st = ds > today ? 'future' : !g ? 'none' : c >= g ? 'met' : c > 0 ? 'part' : 'miss';
+    const tip = ds > today ? '' : g ? `${c} / ${fmtN(g)}장` : `${c}장`;
+    cells += `<span class="rd ${st} ${ds===today?'today':''}" aria-label="${m}월 ${d}일 ${tip}${st==='met'?', 목표 달성':''}"><b class="num">${d}</b>${c && ds <= today ? `<small class="num">${c}</small>` : ''}</span>`;
+  }
+  const cur = monthStat(S.recMonth);
+  const months = []; for(let ym = thisMonth; ym >= firstMonth; ){ months.push(ym); const [yy,mm] = ym.split('-').map(Number); ym = mm === 1 ? `${yy-1}-12` : `${yy}-${pad2(mm-1)}`; }
+  const list = months.length > 1 ? `<div class="rec-months">${months.map(ym => { const st = monthStat(ym), [yy,mm] = ym.split('-').map(Number);
+    return `<button class="${ym===S.recMonth?'on':''}" data-act="recMonth" data-v="${ym}"><span>${yy}년 ${mm}월${st.goalDays && st.met === st.goalDays ? ` <em class="star">${I.check(13)}</em>` : ''}</span><span class="num">목표 달성 <b>${st.met}</b> / ${st.goalDays}일 · ${st.ch}장</span></button>`; }).join('')}</div>` : '';
+  return `<section class="panel">
+    <div class="panel-head"><h2>하루 목표 기록</h2><span class="count num">${goalFor(today) ? `하루 ${fmtN(goalFor(today))}장` : '지금은 목표 없음'}</span></div>
+    <div class="cal-head"><button type="button" class="icon-btn" data-act="recNav" data-v="-1" aria-label="이전 달" ${S.recMonth <= firstMonth ? 'disabled' : ''}>${I.left(20)}</button><b class="num">${y}년 ${m}월</b>
+      <button type="button" class="icon-btn" data-act="recNav" data-v="1" aria-label="다음 달" ${S.recMonth >= thisMonth ? 'disabled' : ''}>${I.right(20)}</button></div>
+    <p class="rec-sum num">목표 달성 <b>${cur.met}일</b> / ${cur.goalDays}일 · 읽은 성경 <b>${cur.ch}장</b></p>
+    ${monthCheer(S.recMonth, cur, S.recMonth === thisMonth)}
+    <div class="rec-grid" role="group" aria-label="${y}년 ${m}월 하루 목표 기록">${cells}</div>
+    <div class="rec-legend"><span><i class="met"></i>목표 달성</span><span><i class="part"></i>조금 읽음</span><span><i class="miss"></i>못 읽음</span></div>
+    ${list}</section>`;
+}
+const CHEER = {
+  full: ['한 달 내내 하루도 빠짐없이 말씀과 함께했어요. 정말 멋져요!', '매일 약속을 지켰어요! 이 꾸준함이 큰 열매가 될 거예요.', '완벽한 한 달이에요. 말씀으로 하루하루를 채운 당신을 칭찬해요!'],
+  high: ['거의 매일 말씀을 가까이했어요. 정말 잘하고 있어요!', '꾸준함이 빛나는 한 달이에요. 이대로 쭉 가요!', '목표를 대부분 지켰어요. 스스로를 칭찬해 주세요!'],
+  mid:  ['절반 넘게 목표를 지켰어요. 조금만 더 힘내면 금방 습관이 될 거예요.', '잘 해내고 있어요. 못 읽은 날보다 읽은 날이 더 많아요!', '한 걸음씩 꾸준히 가고 있어요. 다음 달엔 한 칸 더 채워 봐요.'],
+  low:  ['바쁜 날들이 많았죠. 오늘 한 장부터 다시 시작해도 충분해요.', '넘어져도 괜찮아요. 다시 펴는 그 한 장이 소중해요.', '조금씩이라도 말씀을 놓지 않았어요. 천천히 다시 걸어가요.'],
+  volume: ['목표보다 더 많이 읽었어요, 정말 잘했어요! 이제 하루하루 조금씩 규칙적으로 읽으면 더 단단한 습관이 될 거예요.', '말씀을 넉넉히 읽은 한 달이에요! 몰아서 읽기보다 매일 꾸준히 읽어 보면 말씀이 삶에 더 깊이 스며들 거예요.', '읽은 양은 목표를 넘었어요. 멋져요! 다음 달엔 매일 정한 만큼 꾸준히 읽는 것에도 도전해 봐요.'],
+  zero: ['「사슴이 시냇물을 찾기에 갈급함 같이」 우리 마음도 말씀을 더 사모해 봐요. 오늘 한 장이 그 시작이 될 거예요.', '주의 말씀은 꿀보다 달다고 했어요. 그 단맛을 다시 맛보러 오늘 성경을 펴 봐요.', '갓난아기가 젖을 사모하듯 말씀을 사모하면 우리 영혼이 자라요. 오늘부터 하나님의 말씀을 더 가까이해요.'],
+};
+function monthCheer(ym, st, ongoing){
+  if(!st.goalDays) return '';
+  const r = st.met / st.goalDays;
+  const tier = st.met === st.goalDays ? 'full' : (!ongoing || st.goalDays >= 7) && st.goalCh >= st.goalSum ? 'volume' : r >= 0.8 ? 'high' : r >= 0.5 ? 'mid' : st.met > 0 ? 'low' : 'zero';
+  const list = CHEER[tier], pick = list[[...ym].reduce((a,c) => a + c.charCodeAt(0), 0) % list.length];
+  const praise = tier === 'full' || tier === 'high' || tier === 'volume';
+  let msg = pick;
+  if(ongoing && tier === 'full') msg = `이번 달은 아직 하루도 빠짐없이 목표를 지키고 있어요. ${st.goalDays}일 연속, 정말 잘하고 있어요!`;
+  return `<div class="cheer ${tier === 'zero' ? 'motivate' : praise ? 'praise' : 'encourage'}"><span class="cheer-ic">${tier === 'zero' ? I.book(16) : praise ? I.check(16) : I.hands(16)}</span><p>${esc(msg)}</p></div>`;
+}
+function achievementsHtml(){
+  const a = S.achievements || [];
+  const rows = a.map(x => `<div class="ach"><span class="ach-ic">${I.check(18)}</span><div><b>${ymd(x.plan_start)} – ${ymd(x.plan_end)}</b><span>${esc(x.label)} · ${Number(x.chapters).toLocaleString('ko-KR')}장</span></div><span class="ach-on num">${ymd(x.completed_on)}<br>완독</span></div>`).join('');
+  return `<section class="panel"><div class="panel-head"><h2>완독 기록</h2>${a.length ? `<span class="count num">${a.length}번</span>` : ''}</div>
+    ${rows ? `<div class="ach-list">${rows}</div>` : '<p class="hint" style="margin:0">통독 목표를 모두 읽으면 언제부터 언제까지 무엇을 읽었는지 여기에 기록돼요.</p>'}</section>`;
 }
 
 function answersHtml(){
@@ -1101,9 +1274,13 @@ function pageServers(){
 }
 function pagePlan(){
   const p = S.profile;
-  if(!S.draft.plan) S.draft.plan = {start:p.plan_start, end:p.plan_end, scope:p.plan_scope, times:p.plan_times};
+  if(!S.draft.plan){
+    const custom = Array.isArray(p.plan_books) && p.plan_books.length;
+    S.draft.plan = {start:p.plan_start, end:p.plan_end, scope: custom ? 'BOOKS' : p.plan_scope, times:p.plan_times, books: custom ? p.plan_books.map(Number) : [], daily: Number(p.plan_daily) || 0};
+  }
   const d = S.draft.plan;
-  const total = (d.scope==='ALL' ? 1189 : d.scope==='OT' ? 929 : 260) * d.times;
+  const draftSet = d.scope === 'BOOKS' ? new Set(d.books) : planBookSet({plan_scope:d.scope});
+  const total = BOOKS.filter(b => draftSet.has(b.id)).reduce((a,b) => a + b.c, 0) * d.times;
   const span = d.end >= d.start ? daysBetween(d.start, d.end) + 1 : 0;
   const which = S.cal && (S.cal.target === 'planStart' || S.cal.target === 'planEnd') ? S.cal.target : null;
   const today = appToday();
@@ -1114,10 +1291,19 @@ function pagePlan(){
         <button type="button" class="date-btn ${which==='planEnd'?'on':''}" data-act="openCal" data-v="planEnd" aria-expanded="${which==='planEnd'}">${I.cal(16)}<span class="num">${ymd(d.end)}</span></button></div>
         ${which ? `<span class="hint">${which==='planStart' ? '시작일' : '종료일'}을 골라주세요</span>${cal}` : ''}
         <span class="hint">오늘(${ymd(today)})이 기간 안에 있어야 지금 체크하는 장이 진행률에 들어가요.</span></div>
-      <div class="field"><span class="label">범위</span><div class="seg three">${['OT','NT','ALL'].map(s => `<button class="${d.scope===s?'on':''}" data-act="planScope" data-v="${s}" aria-pressed="${d.scope===s}">${SCOPE_NAME[s]}</button>`).join('')}</div></div>
+      <div class="field"><span class="label">범위</span><div class="seg four">${[['OT','구약'],['NT','신약'],['ALL','신구약'],['BOOKS','직접 고르기']].map(([s,l]) => `<button class="${d.scope===s?'on':''}" data-act="planScope" data-v="${s}" aria-pressed="${d.scope===s}">${l}</button>`).join('')}</div>
+        ${d.scope === 'BOOKS' ? bookPickHtml(d.books) : ''}</div>
       <div class="between"><span class="label">통독 횟수</span><div class="stepper"><button data-act="planTimes" data-v="-1" aria-label="줄이기">−</button><b class="num">${d.times}회</b><button data-act="planTimes" data-v="1" aria-label="늘리기">+</button></div></div>
-      <div class="calc num">${span ? `${total.toLocaleString('ko-KR')}장 · ${span}일 → 하루 약 <b>${ceil1(total/span)}장</b>` : '종료일이 시작일보다 늦어야 해요'}</div>
+      <div class="between"><div style="display:flex;flex-direction:column;gap:2px"><span class="label">하루 목표</span><span class="hint">하루에 읽을 장 수를 정해요</span></div><div class="stepper"><button data-act="planDaily" data-v="-1" aria-label="줄이기">−</button><b class="num">${d.daily ? d.daily+'장' : '없음'}</b><button data-act="planDaily" data-v="1" aria-label="늘리기">+</button></div></div>
+      <div class="calc num">${!total ? '읽을 성경을 한 권 이상 골라주세요' : !span ? '종료일이 시작일보다 늦어야 해요' : `${total.toLocaleString('ko-KR')}장 · ${span}일 → 기간 안에 끝내려면 하루 약 <b>${ceil1(total/span)}장</b>${d.daily ? `<br>하루 ${d.daily}장씩 읽으면 약 <b>${Math.ceil(total/d.daily)}일</b> 걸려요` : ''}`}</div>
       <button class="btn btn-strong btn-block" data-act="savePlan">저장</button></section></div>`;
+}
+function bookPickHtml(sel){
+  const set = new Set(sel);
+  const part = t => { const list = BOOKS.filter(b => b.t === t), all = list.every(b => set.has(b.id));
+    return `<div class="bp-head"><b>${SCOPE_NAME[t]} <span class="hint num">${list.filter(b => set.has(b.id)).length} / ${list.length}권</span></b><button type="button" class="link-btn" data-act="planBooksAll" data-v="${t}">${all ? '모두 빼기' : '모두 고르기'}</button></div>
+      <div class="bp-grid">${list.map(b => `<button type="button" class="chip ${set.has(b.id)?'on':''}" data-act="planBook" data-v="${b.id}" aria-pressed="${set.has(b.id)}">${b.name}</button>`).join('')}</div>`; };
+  return `<div class="book-pick">${part('OT')}${part('NT')}</div>`;
 }
 function pagePrivacy(){
   const p = S.profile;
@@ -1286,8 +1472,10 @@ function render(){
   app.dataset.tab = (S.session && S.profile?.nickname && !S.recovery) ? S.tab : 'auth';
   app.innerHTML = html + sheetHtml() + (S.viewPhoto ? `<div class="photo-view" data-act="closePhoto" role="dialog" aria-label="사진 크게 보기"><img src="${esc(S.viewPhoto)}" alt="첨부 사진"><button class="rm" data-act="closePhoto" aria-label="닫기">${I.x(22)}</button></div>` : '');
   app.querySelectorAll('[data-keep-scroll][id]').forEach(el => {
+    const onEl = el.querySelector('.chip.on');
     if(el.id in keep) el.scrollLeft = keep[el.id];
-    else { const on = el.querySelector('.chip.on'); if(on){ const r = on.getBoundingClientRect(), c = el.getBoundingClientRect(); el.scrollLeft = Math.max(0, el.scrollLeft + r.left - c.left - el.clientWidth/2 + r.width/2); } }
+    if(onEl && el.id in keep){ const r = onEl.getBoundingClientRect(), c = el.getBoundingClientRect(); if(r.left < c.left || r.right > c.right) delete keep[el.id]; }
+    if(!(el.id in keep)){ const on = el.querySelector('.chip.on'); if(on){ const r = on.getBoundingClientRect(), c = el.getBoundingClientRect(); el.scrollLeft = Math.max(0, el.scrollLeft + r.left - c.left - el.clientWidth/2 + r.width/2); } }
   });
   document.body.style.overflow = S.sheet ? 'hidden' : '';
   if(S.scrollToCh){
@@ -1361,6 +1549,7 @@ async function boot(){
   try{
     const [profile, readings] = await Promise.all([API.loadProfile(), API.loadReadings()]);
     S.profile = profile; S.readings = readings || [];
+    await loadRecords(); syncAchievement().then(ok => { if(ok) render(); });
     if(S.pendingCode){ const c = S.pendingCode; S.pendingCode = null; try{ S.groupId = await API.joinGroup(c); lsSet('groupId', S.groupId); S.codeMsg = null; }catch(e){ S.codeMsg = errMsg(e); } }
     await loadGroups(); await loadGroupData(); await loadInquiries();
   }catch(e){ toast(errMsg(e)); }
@@ -1452,7 +1641,7 @@ const ACT = {
   confirmYes(){ const run = S.sheet?.run; if(!run) return; guard(async () => { try{ await run(); } finally { S.sheet = null; } }); },
   close(){ S.sheet = null; render(); },
   bibleView(d){ S.bibleView = d.v; render(); if(d.v === 'stats') loadGroupData().then(render).catch(()=>{}); },
-  testament(d){ S.testament = d.v; S.bookId = null; render(); },
+  testament(d){ S.testament = d.v; S.bookId = null; S.jumpTestament = d.v; S.fixMode = false; S.sel.clear(); render(); },
   book(d){ S.bookId = Number(d.v); render(); },
   ch(d){ if(Date.now() < suppressClickUntil) return; S.sel.has(d.k) ? S.sel.delete(d.k) : S.sel.add(d.k); render(); },
   clearSel(){ S.sel.clear(); render(); },
@@ -1472,7 +1661,8 @@ const ACT = {
       await API.addReadings(list); const n = list.length; S.sel.clear(); S.readings = await API.loadReadings(); await loadGroupData();
       const fresh = completedBooks().filter(id => !before.includes(id));
       const allDone = !beforeDone && computeProgress(S.profile, S.readings).remaining <= 0;
-      if(allDone) celebrate('통독 목표 달성', `${planLabel(computeProgress(S.profile, S.readings))}`, '목표한 성경을 모두 읽었어요. 정말 수고 많았어요!');
+      await syncAchievement();
+      if(allDone) celebrate('통독 목표 달성', `${planLabel(computeProgress(S.profile, S.readings))}`, '목표한 성경을 모두 읽었어요. 통계의 「완독 기록」에 남겨 두었어요!');
       else if(fresh.length) celebrate('한 권 완독', `${fresh.map(id => BOOK[id].name).join(' · ')}`, fresh.length === 1 ? `${BOOK[fresh[0]].name} ${BOOK[fresh[0]].c}장을 모두 읽었어요` : `${fresh.length}권을 모두 읽었어요`);
       else toast(`${md(appToday())}, ${n}장 등록했어요`);
     });
@@ -1527,7 +1717,12 @@ const ACT = {
     PUSH.state = 'off'; toast('이 기기 알림을 껐어요');
   }); },
   async installApp(){ if(!installPrompt) return; installPrompt.prompt(); try{ await installPrompt.userChoice; }catch(e){} installPrompt = null; render(); },
-  planScope(d){ S.draft.plan.scope = d.v; render(); },
+  planScope(d){ const p = S.draft.plan; if(d.v === 'BOOKS' && !p.books.length) p.books = [...planBookSet({plan_scope: p.scope === 'BOOKS' ? 'ALL' : p.scope})]; p.scope = d.v; render(); },
+  planBook(d){ const p = S.draft.plan, id = Number(d.v); p.books = p.books.includes(id) ? p.books.filter(x => x !== id) : [...p.books, id]; render(); },
+  planBooksAll(d){ const p = S.draft.plan, ids = BOOKS.filter(b => b.t === d.v).map(b => b.id), all = ids.every(id => p.books.includes(id)); p.books = all ? p.books.filter(x => !ids.includes(x)) : [...new Set([...p.books, ...ids])]; render(); },
+  recNav(d){ const [y,m] = S.recMonth.split('-').map(Number), t = new Date(Date.UTC(y, m-1+Number(d.v), 1)); S.recMonth = t.toISOString().slice(0,7); render(); },
+  recMonth(d){ S.recMonth = d.v; render(); },
+  planDaily(d){ const p = S.draft.plan; p.daily = Math.min(100, Math.max(0, (p.daily || 0) + Number(d.v))); render(); },
   planTimes(d){ S.draft.plan.times = Math.min(10, Math.max(1, S.draft.plan.times + Number(d.v))); render(); },
   savePlan(){
     const d = S.draft.plan;
@@ -1535,7 +1730,16 @@ const ACT = {
     const today = appToday();
     if(d.start > today){ toast('시작일은 오늘이나 그 전으로 골라주세요'); return; }
     if(d.end < today){ toast('종료일은 오늘이나 그 뒤로 골라주세요'); return; }
-    guard(async () => { S.profile = await API.updateProfile({plan_start:d.start, plan_end:d.end, plan_scope:d.scope, plan_times:d.times}); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
+    let scope = d.scope, books = null;
+    if(d.scope === 'BOOKS'){
+      if(!d.books.length){ toast('읽을 성경을 한 권 이상 골라주세요'); return; }
+      const ids = [...new Set(d.books)].sort((a,b) => a-b), ot = ids.filter(id => BOOK[id].t === 'OT').length, nt = ids.length - ot;
+      if(ot === 39 && nt === 27) scope = 'ALL'; else if(ot === 39 && !nt) scope = 'OT'; else if(nt === 27 && !ot) scope = 'NT';
+      else { books = ids; scope = !nt ? 'OT' : !ot ? 'NT' : 'ALL'; }
+    }
+    guard(async () => { const prevDaily = Number(S.profile.plan_daily) || 0; S.profile = await API.updateProfile({plan_start:d.start, plan_end:d.end, plan_scope:scope, plan_books:books, plan_times:d.times, plan_daily: d.daily || null});
+      if((d.daily || 0) !== prevDaily){ try{ await API.setDailyGoal(d.daily || null); }catch(e){} }
+      await loadRecords(); syncAchievement(); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
   },
   prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
   prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
@@ -1651,9 +1855,26 @@ const FORMS = {
   },
 };
 
+/* 꾹 누르면 계속 바뀌는 +/− 버튼 */
+let hold = null, holdSuppressUntil = 0;
+function holdStop(){ if(!hold) return; clearTimeout(hold.t); if(hold.fired) holdSuppressUntil = Date.now() + 400; hold = null; }
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.stepper button[data-act]');
+  if(!el || el.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  holdStop();
+  const act = el.dataset.act, data = {...el.dataset};
+  hold = {fired:false, n:0, t:null};
+  const tick = () => { if(!hold) return; hold.fired = true; hold.n++; try{ ACT[act]?.(data); }catch(err){}
+    try{ if(hold.n === 1) navigator.vibrate?.(8); }catch(err){}
+    hold.t = setTimeout(tick, hold.n < 6 ? 180 : hold.n < 16 ? 100 : 55); };
+  hold.t = setTimeout(tick, 420);
+});
+['pointerup','pointercancel','blur'].forEach(ev => (ev === 'blur' ? window : document).addEventListener(ev, holdStop));
+document.addEventListener('contextmenu', e => { if(e.target.closest('.stepper button')) e.preventDefault(); });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if(!el || el.disabled) return;
+  if(Date.now() < holdSuppressUntil && el.closest('.stepper')) return;
   const fn = ACT[el.dataset.act]; if(!fn) return;
   if(el.type === 'checkbox'){ fn(el.dataset, el); return; }
   if(el.dataset.act === 'noop') return;
@@ -1759,7 +1980,7 @@ function pushPanel(){
 /* ─── 완독 축하 ─── */
 function completedBooks(){
   const pr = computeProgress(S.profile, S.readings);
-  return BOOKS.filter(b => (pr.scope === 'ALL' || b.t === pr.scope) && Array.from({length:b.c}, (_,i) => pr.counts.get(b.id+'-'+(i+1)) || 0).every(c => c >= pr.times)).map(b => b.id);
+  return BOOKS.filter(b => pr.bookSet.has(b.id) && Array.from({length:b.c}, (_,i) => pr.counts.get(b.id+'-'+(i+1)) || 0).every(c => c >= pr.times)).map(b => b.id);
 }
 function celebrate(eyebrow, title, sub){
   document.querySelector('.celebrate')?.remove();
