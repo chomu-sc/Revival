@@ -339,7 +339,7 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .inline input{flex:1;min-width:0}
 .stepper{display:flex;align-items:center;gap:4px}
 .stepper b{min-width:48px;text-align:center;font-size:18px;font-weight:800}
-.stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--chip-line);background:var(--surface);font-size:20px}
+.stepper button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--chip-line);background:var(--surface);font-size:20px}
 .calc{padding:12px 14px;border-radius:12px;background:var(--soft);font-size:13px;line-height:1.5;color:var(--muted)}
 .calc b{color:var(--fg)}
 .between{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -429,7 +429,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0045';
+const APP_VERSION = '2026.11.04-0055';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1855,9 +1855,26 @@ const FORMS = {
   },
 };
 
+/* 꾹 누르면 계속 바뀌는 +/− 버튼 */
+let hold = null, holdSuppressUntil = 0;
+function holdStop(){ if(!hold) return; clearTimeout(hold.t); if(hold.fired) holdSuppressUntil = Date.now() + 400; hold = null; }
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.stepper button[data-act]');
+  if(!el || el.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  holdStop();
+  const act = el.dataset.act, data = {...el.dataset};
+  hold = {fired:false, n:0, t:null};
+  const tick = () => { if(!hold) return; hold.fired = true; hold.n++; try{ ACT[act]?.(data); }catch(err){}
+    try{ if(hold.n === 1) navigator.vibrate?.(8); }catch(err){}
+    hold.t = setTimeout(tick, hold.n < 6 ? 180 : hold.n < 16 ? 100 : 55); };
+  hold.t = setTimeout(tick, 420);
+});
+['pointerup','pointercancel','blur'].forEach(ev => (ev === 'blur' ? window : document).addEventListener(ev, holdStop));
+document.addEventListener('contextmenu', e => { if(e.target.closest('.stepper button')) e.preventDefault(); });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if(!el || el.disabled) return;
+  if(Date.now() < holdSuppressUntil && el.closest('.stepper')) return;
   const fn = ACT[el.dataset.act]; if(!fn) return;
   if(el.type === 'checkbox'){ fn(el.dataset, el); return; }
   if(el.dataset.act === 'noop') return;
