@@ -429,7 +429,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0020';
+const APP_VERSION = '2026.11.04-0045';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -961,8 +961,9 @@ function checkHtml(pr){
   const testaments = ['OT','NT'].filter(t => BOOKS.some(b => b.t === t && pr.bookSet.has(b.id)));
   if(S.jumpToLast || S.bookId == null){
     S.jumpToLast = false;
-    const last = S.readings.filter(r => pr.bookSet.has(Number(r.book))).reduce((a, r) => (!a || Number(r.id) > Number(a.id)) ? r : a, null);
-    if(last){ S.testament = BOOK[last.book].t; S.bookId = last.book; S.scrollToCh = last.book + '-' + last.chapter; }
+    const only = S.jumpTestament; S.jumpTestament = null;
+    const last = S.readings.filter(r => pr.bookSet.has(Number(r.book)) && (!only || BOOK[r.book]?.t === only)).reduce((a, r) => (!a || Number(r.id) > Number(a.id)) ? r : a, null);
+    if(last){ S.testament = BOOK[last.book].t; S.bookId = last.book; if(!only) S.scrollToCh = last.book + '-' + last.chapter; }
   }
   if(!testaments.includes(S.testament)) S.testament = testaments[0];
   const books = BOOKS.filter(b => b.t === S.testament && pr.bookSet.has(b.id));
@@ -1085,7 +1086,7 @@ function monthlyHtml(){
   const list = months.length > 1 ? `<div class="rec-months">${months.map(ym => { const st = monthStat(ym), [yy,mm] = ym.split('-').map(Number);
     return `<button class="${ym===S.recMonth?'on':''}" data-act="recMonth" data-v="${ym}"><span>${yy}년 ${mm}월${st.goalDays && st.met === st.goalDays ? ` <em class="star">${I.check(13)}</em>` : ''}</span><span class="num">목표 달성 <b>${st.met}</b> / ${st.goalDays}일 · ${st.ch}장</span></button>`; }).join('')}</div>` : '';
   return `<section class="panel">
-    <div class="panel-head"><h2>하루 목표 기록</h2><span class="count num">하루 ${fmtN(goalFor(today) || 0)}장</span></div>
+    <div class="panel-head"><h2>하루 목표 기록</h2><span class="count num">${goalFor(today) ? `하루 ${fmtN(goalFor(today))}장` : '지금은 목표 없음'}</span></div>
     <div class="cal-head"><button type="button" class="icon-btn" data-act="recNav" data-v="-1" aria-label="이전 달" ${S.recMonth <= firstMonth ? 'disabled' : ''}>${I.left(20)}</button><b class="num">${y}년 ${m}월</b>
       <button type="button" class="icon-btn" data-act="recNav" data-v="1" aria-label="다음 달" ${S.recMonth >= thisMonth ? 'disabled' : ''}>${I.right(20)}</button></div>
     <p class="rec-sum num">목표 달성 <b>${cur.met}일</b> / ${cur.goalDays}일 · 읽은 성경 <b>${cur.ch}장</b></p>
@@ -1471,8 +1472,10 @@ function render(){
   app.dataset.tab = (S.session && S.profile?.nickname && !S.recovery) ? S.tab : 'auth';
   app.innerHTML = html + sheetHtml() + (S.viewPhoto ? `<div class="photo-view" data-act="closePhoto" role="dialog" aria-label="사진 크게 보기"><img src="${esc(S.viewPhoto)}" alt="첨부 사진"><button class="rm" data-act="closePhoto" aria-label="닫기">${I.x(22)}</button></div>` : '');
   app.querySelectorAll('[data-keep-scroll][id]').forEach(el => {
+    const onEl = el.querySelector('.chip.on');
     if(el.id in keep) el.scrollLeft = keep[el.id];
-    else { const on = el.querySelector('.chip.on'); if(on){ const r = on.getBoundingClientRect(), c = el.getBoundingClientRect(); el.scrollLeft = Math.max(0, el.scrollLeft + r.left - c.left - el.clientWidth/2 + r.width/2); } }
+    if(onEl && el.id in keep){ const r = onEl.getBoundingClientRect(), c = el.getBoundingClientRect(); if(r.left < c.left || r.right > c.right) delete keep[el.id]; }
+    if(!(el.id in keep)){ const on = el.querySelector('.chip.on'); if(on){ const r = on.getBoundingClientRect(), c = el.getBoundingClientRect(); el.scrollLeft = Math.max(0, el.scrollLeft + r.left - c.left - el.clientWidth/2 + r.width/2); } }
   });
   document.body.style.overflow = S.sheet ? 'hidden' : '';
   if(S.scrollToCh){
@@ -1638,7 +1641,7 @@ const ACT = {
   confirmYes(){ const run = S.sheet?.run; if(!run) return; guard(async () => { try{ await run(); } finally { S.sheet = null; } }); },
   close(){ S.sheet = null; render(); },
   bibleView(d){ S.bibleView = d.v; render(); if(d.v === 'stats') loadGroupData().then(render).catch(()=>{}); },
-  testament(d){ S.testament = d.v; S.bookId = null; render(); },
+  testament(d){ S.testament = d.v; S.bookId = null; S.jumpTestament = d.v; S.fixMode = false; S.sel.clear(); render(); },
   book(d){ S.bookId = Number(d.v); render(); },
   ch(d){ if(Date.now() < suppressClickUntil) return; S.sel.has(d.k) ? S.sel.delete(d.k) : S.sel.add(d.k); render(); },
   clearSel(){ S.sel.clear(); render(); },
