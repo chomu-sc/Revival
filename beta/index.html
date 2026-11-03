@@ -230,6 +230,12 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .rd.miss{border-color:var(--chip-line);color:var(--muted)}
 .rd.none,.rd.future{color:var(--faint)}
 .rd.today{box-shadow:0 0 0 2px var(--fg) inset}
+.cheer{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55}
+.cheer p{margin:0}
+.cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
+.cheer.praise{background:var(--accent-tint);color:var(--fg)}.cheer.praise .cheer-ic{background:var(--accent);color:var(--surface)}
+.cheer.encourage{background:color-mix(in srgb,#F2994A 16%,var(--surface));color:var(--fg)}.cheer.encourage .cheer-ic{background:#F2994A;color:#fff}
+.rec-months .star{display:inline-flex;vertical-align:-2px;color:var(--accent);font-style:normal}
 .rec-legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
 .rec-legend span{display:inline-flex;align-items:center;gap:5px}
 .rec-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
@@ -422,7 +428,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0005';
+const APP_VERSION = '2026.11.04-0010';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1076,15 +1082,33 @@ function monthlyHtml(){
   const cur = monthStat(S.recMonth);
   const months = []; for(let ym = thisMonth; ym >= firstMonth; ){ months.push(ym); const [yy,mm] = ym.split('-').map(Number); ym = mm === 1 ? `${yy-1}-12` : `${yy}-${pad2(mm-1)}`; }
   const list = months.length > 1 ? `<div class="rec-months">${months.map(ym => { const st = monthStat(ym), [yy,mm] = ym.split('-').map(Number);
-    return `<button class="${ym===S.recMonth?'on':''}" data-act="recMonth" data-v="${ym}"><span>${yy}년 ${mm}월</span><span class="num">목표 달성 <b>${st.met}</b> / ${st.goalDays}일 · ${st.ch}장</span></button>`; }).join('')}</div>` : '';
+    return `<button class="${ym===S.recMonth?'on':''}" data-act="recMonth" data-v="${ym}"><span>${yy}년 ${mm}월${st.goalDays && st.met === st.goalDays ? ` <em class="star">${I.check(13)}</em>` : ''}</span><span class="num">목표 달성 <b>${st.met}</b> / ${st.goalDays}일 · ${st.ch}장</span></button>`; }).join('')}</div>` : '';
   return `<section class="panel">
     <div class="panel-head"><h2>하루 목표 기록</h2><span class="count num">하루 ${fmtN(goalFor(today) || 0)}장</span></div>
     <div class="cal-head"><button type="button" class="icon-btn" data-act="recNav" data-v="-1" aria-label="이전 달" ${S.recMonth <= firstMonth ? 'disabled' : ''}>${I.left(20)}</button><b class="num">${y}년 ${m}월</b>
       <button type="button" class="icon-btn" data-act="recNav" data-v="1" aria-label="다음 달" ${S.recMonth >= thisMonth ? 'disabled' : ''}>${I.right(20)}</button></div>
     <p class="rec-sum num">목표 달성 <b>${cur.met}일</b> / ${cur.goalDays}일 · 읽은 성경 <b>${cur.ch}장</b></p>
+    ${monthCheer(S.recMonth, cur, S.recMonth === thisMonth)}
     <div class="rec-grid" role="group" aria-label="${y}년 ${m}월 하루 목표 기록">${cells}</div>
     <div class="rec-legend"><span><i class="met"></i>목표 달성</span><span><i class="part"></i>조금 읽음</span><span><i class="miss"></i>못 읽음</span></div>
     ${list}</section>`;
+}
+const CHEER = {
+  full: ['한 달 내내 하루도 빠짐없이 말씀과 함께했어요. 정말 멋져요!', '매일 약속을 지켰어요! 이 꾸준함이 큰 열매가 될 거예요.', '완벽한 한 달이에요. 말씀으로 하루하루를 채운 당신을 칭찬해요!'],
+  high: ['거의 매일 말씀을 가까이했어요. 정말 잘하고 있어요!', '꾸준함이 빛나는 한 달이에요. 이대로 쭉 가요!', '목표를 대부분 지켰어요. 스스로를 칭찬해 주세요!'],
+  mid:  ['절반 넘게 목표를 지켰어요. 조금만 더 힘내면 금방 습관이 될 거예요.', '잘 해내고 있어요. 못 읽은 날보다 읽은 날이 더 많아요!', '한 걸음씩 꾸준히 가고 있어요. 다음 달엔 한 칸 더 채워 봐요.'],
+  low:  ['바쁜 날들이 많았죠. 오늘 한 장부터 다시 시작해도 충분해요.', '넘어져도 괜찮아요. 다시 펴는 그 한 장이 소중해요.', '조금씩이라도 말씀을 놓지 않았어요. 천천히 다시 걸어가요.'],
+  zero: ['이번에는 쉬어 갔네요. 오늘부터 다시 함께 읽어요.', '괜찮아요. 말씀은 언제든 그 자리에서 기다리고 있어요.', '새로 시작하기 딱 좋은 날이에요. 한 장만 펴 볼까요?'],
+};
+function monthCheer(ym, st, ongoing){
+  if(!st.goalDays) return '';
+  const r = st.met / st.goalDays;
+  const tier = st.met === st.goalDays ? 'full' : r >= 0.8 ? 'high' : r >= 0.5 ? 'mid' : st.met > 0 ? 'low' : 'zero';
+  const list = CHEER[tier], pick = list[[...ym].reduce((a,c) => a + c.charCodeAt(0), 0) % list.length];
+  const praise = tier === 'full' || tier === 'high';
+  let msg = pick;
+  if(ongoing && tier === 'full') msg = `이번 달은 아직 하루도 빠짐없이 목표를 지키고 있어요. ${st.goalDays}일 연속, 정말 잘하고 있어요!`;
+  return `<div class="cheer ${praise ? 'praise' : 'encourage'}"><span class="cheer-ic">${praise ? I.check(16) : I.hands(16)}</span><p>${esc(msg)}</p></div>`;
 }
 function achievementsHtml(){
   const a = S.achievements || [];
