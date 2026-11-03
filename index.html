@@ -368,6 +368,7 @@ button.server-btn{cursor:pointer}
   .scrim{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
   .sheet{max-height:96dvh}
 }
+.beta-badge{position:fixed;z-index:90;top:calc(4px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);padding:3px 10px;border-radius:999px;background:#E8622C;color:#fff;font-size:11px;font-weight:800;letter-spacing:.04em;pointer-events:none;opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 
@@ -379,7 +380,11 @@ button.server-btn{cursor:pointer}
 const SUPABASE_URL = 'https://wmoqunsxucnexolzhktx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtb3F1bnN4dWNuZXhvbHpoa3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDM2MzUsImV4cCI6MjEwOTAxOTYzNX0.L5Yoaq3FSbjzeVoEMfoSjNapAF3-skLu0dAdApGYGgQ';
 const IS_DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
-const APP_VERSION = '2026.11.01-2355';
+const IS_BETA = /\/beta\//.test(location.pathname);
+const LS_PREFIX = IS_BETA ? 'beta:' : '';
+if(IS_BETA) document.title = '기도와 말씀 (테스트)';
+if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
+const APP_VERSION = '2026.11.03-1040';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -407,8 +412,8 @@ const floor1 = n => (Math.floor(n*10+1e-9)/10).toFixed(1);
 const ceil1 = n => (Math.ceil(n*10-1e-9)/10).toFixed(1);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function rel(ts){ const m = Math.floor((Date.now()-new Date(ts))/60000); if(m<1) return '방금'; if(m<60) return m+'분 전'; const h = Math.floor(m/60); if(h<24) return h+'시간 전'; const d = Math.floor(h/24); return d<30 ? d+'일 전' : md(kstDate(ts)); }
-function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsGet(k){ try{ return localStorage.getItem(LS_PREFIX + k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(LS_PREFIX + k,v); }catch(e){} }
 
 /* ─── 통독 진행 계산 ─── */
 const DEMO_PHOTOS = {};
@@ -471,7 +476,7 @@ function supabaseApi(){
   return {
     async init(){
       await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js');
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, IS_BETA ? {auth:{storageKey:'sb-beta-auth'}} : {});
       const {data} = await sb.auth.getSession();
       S.session = data.session;
       sb.auth.onAuthStateChange((ev, session) => {
@@ -1001,7 +1006,7 @@ function meHtml(){
     <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.filter(q => !q.hidden).length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
-    <p class="hint" style="text-align:center;margin:0">버전 ${APP_VERSION}</p>
+    <p class="hint" style="text-align:center;margin:0">버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p>
   </div>`;
 }
 const fmtDT = ts => { const d = kstDate(ts); const t = new Date(new Date(ts).getTime() + 9*HOUR).toISOString().slice(11,16); return `${md(d)} ${t}`; };
