@@ -234,6 +234,7 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .cheer p{margin:0}
 .cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
 .cheer.praise{background:var(--accent-tint);color:var(--fg)}.cheer.praise .cheer-ic{background:var(--accent);color:var(--surface)}
+.cheer.motivate{background:color-mix(in srgb,#8E6BD8 14%,var(--surface));color:var(--fg)}.cheer.motivate .cheer-ic{background:#8E6BD8;color:#fff}
 .cheer.encourage{background:color-mix(in srgb,#F2994A 16%,var(--surface));color:var(--fg)}.cheer.encourage .cheer-ic{background:#F2994A;color:#fff}
 .rec-months .star{display:inline-flex;vertical-align:-2px;color:var(--accent);font-style:normal}
 .rec-legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
@@ -428,7 +429,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0010';
+const APP_VERSION = '2026.11.04-0020';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1068,9 +1069,9 @@ function monthlyHtml(){
   const today = appToday(), firstMonth = first.set_on.slice(0,7), thisMonth = today.slice(0,7);
   if(!S.recMonth || S.recMonth < firstMonth || S.recMonth > thisMonth) S.recMonth = thisMonth;
   const counts = {}; S.readings.forEach(r => { counts[r.read_on] = (counts[r.read_on]||0) + 1; });
-  const monthStat = ym => { const [y,m] = ym.split('-').map(Number), n = new Date(Date.UTC(y,m,0)).getUTCDate(); let met = 0, goalDays = 0, ch = 0;
-    for(let d=1; d<=n; d++){ const ds = `${ym}-${pad2(d)}`; ch += counts[ds] || 0; if(ds > today) continue; const g = goalFor(ds); if(!g) continue; goalDays++; if((counts[ds]||0) >= g) met++; }
-    return {met, goalDays, ch}; };
+  const monthStat = ym => { const [y,m] = ym.split('-').map(Number), n = new Date(Date.UTC(y,m,0)).getUTCDate(); let met = 0, goalDays = 0, ch = 0, goalSum = 0, goalCh = 0;
+    for(let d=1; d<=n; d++){ const ds = `${ym}-${pad2(d)}`; ch += counts[ds] || 0; if(ds > today) continue; const g = goalFor(ds); if(!g) continue; goalDays++; goalSum += g; goalCh += counts[ds] || 0; if((counts[ds]||0) >= g) met++; }
+    return {met, goalDays, ch, goalSum, goalCh}; };
   const [y,m] = S.recMonth.split('-').map(Number), n = new Date(Date.UTC(y,m,0)).getUTCDate(), lead = new Date(Date.UTC(y,m-1,1)).getUTCDay();
   let cells = WD.map((w,i) => `<span class="wd ${i===0?'sun':''}" aria-hidden="true">${w}</span>`).join('') + '<span></span>'.repeat(lead);
   for(let d=1; d<=n; d++){
@@ -1098,17 +1099,18 @@ const CHEER = {
   high: ['거의 매일 말씀을 가까이했어요. 정말 잘하고 있어요!', '꾸준함이 빛나는 한 달이에요. 이대로 쭉 가요!', '목표를 대부분 지켰어요. 스스로를 칭찬해 주세요!'],
   mid:  ['절반 넘게 목표를 지켰어요. 조금만 더 힘내면 금방 습관이 될 거예요.', '잘 해내고 있어요. 못 읽은 날보다 읽은 날이 더 많아요!', '한 걸음씩 꾸준히 가고 있어요. 다음 달엔 한 칸 더 채워 봐요.'],
   low:  ['바쁜 날들이 많았죠. 오늘 한 장부터 다시 시작해도 충분해요.', '넘어져도 괜찮아요. 다시 펴는 그 한 장이 소중해요.', '조금씩이라도 말씀을 놓지 않았어요. 천천히 다시 걸어가요.'],
-  zero: ['이번에는 쉬어 갔네요. 오늘부터 다시 함께 읽어요.', '괜찮아요. 말씀은 언제든 그 자리에서 기다리고 있어요.', '새로 시작하기 딱 좋은 날이에요. 한 장만 펴 볼까요?'],
+  volume: ['목표보다 더 많이 읽었어요, 정말 잘했어요! 이제 하루하루 조금씩 규칙적으로 읽으면 더 단단한 습관이 될 거예요.', '말씀을 넉넉히 읽은 한 달이에요! 몰아서 읽기보다 매일 꾸준히 읽어 보면 말씀이 삶에 더 깊이 스며들 거예요.', '읽은 양은 목표를 넘었어요. 멋져요! 다음 달엔 매일 정한 만큼 꾸준히 읽는 것에도 도전해 봐요.'],
+  zero: ['「사슴이 시냇물을 찾기에 갈급함 같이」 우리 마음도 말씀을 더 사모해 봐요. 오늘 한 장이 그 시작이 될 거예요.', '주의 말씀은 꿀보다 달다고 했어요. 그 단맛을 다시 맛보러 오늘 성경을 펴 봐요.', '갓난아기가 젖을 사모하듯 말씀을 사모하면 우리 영혼이 자라요. 오늘부터 하나님의 말씀을 더 가까이해요.'],
 };
 function monthCheer(ym, st, ongoing){
   if(!st.goalDays) return '';
   const r = st.met / st.goalDays;
-  const tier = st.met === st.goalDays ? 'full' : r >= 0.8 ? 'high' : r >= 0.5 ? 'mid' : st.met > 0 ? 'low' : 'zero';
+  const tier = st.met === st.goalDays ? 'full' : (!ongoing || st.goalDays >= 7) && st.goalCh >= st.goalSum ? 'volume' : r >= 0.8 ? 'high' : r >= 0.5 ? 'mid' : st.met > 0 ? 'low' : 'zero';
   const list = CHEER[tier], pick = list[[...ym].reduce((a,c) => a + c.charCodeAt(0), 0) % list.length];
-  const praise = tier === 'full' || tier === 'high';
+  const praise = tier === 'full' || tier === 'high' || tier === 'volume';
   let msg = pick;
   if(ongoing && tier === 'full') msg = `이번 달은 아직 하루도 빠짐없이 목표를 지키고 있어요. ${st.goalDays}일 연속, 정말 잘하고 있어요!`;
-  return `<div class="cheer ${praise ? 'praise' : 'encourage'}"><span class="cheer-ic">${praise ? I.check(16) : I.hands(16)}</span><p>${esc(msg)}</p></div>`;
+  return `<div class="cheer ${tier === 'zero' ? 'motivate' : praise ? 'praise' : 'encourage'}"><span class="cheer-ic">${tier === 'zero' ? I.book(16) : praise ? I.check(16) : I.hands(16)}</span><p>${esc(msg)}</p></div>`;
 }
 function achievementsHtml(){
   const a = S.achievements || [];
