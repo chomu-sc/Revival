@@ -645,3 +645,10 @@ create index if not exists inquiry_photos_inquiry_idx on public.inquiry_photos(i
 alter table public.inquiry_photos enable row level security;
 -- 정책: 본인이 10분 안에 쓴 문의에만 추가 / 총 관리자만 읽기
 -- storage.objects: 본인 폴더(<user id>/...)에만 올리기, 총 관리자만 읽기·삭제
+
+-- ─── 통독 목표: 성경 권 단위 범위, 하루 목표 (2026-11-03) ───
+alter table public.profiles add column if not exists plan_books smallint[] null;   -- null이면 plan_scope 사용
+alter table public.profiles add column if not exists plan_daily numeric(4,1) null; -- 하루 목표 장 수
+-- check: plan_books 1~66권, 값 1~66 / plan_daily 0.5~200
+grant update (plan_books, plan_daily) on public.profiles to authenticated;
+-- reading_board: plan_books가 있으면 그 권들만 진행률에 계산
