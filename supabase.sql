@@ -652,3 +652,7 @@ alter table public.profiles add column if not exists plan_daily numeric(4,1) nul
 -- check: plan_books 1~66권, 값 1~66 / plan_daily 0.5~200
 grant update (plan_books, plan_daily) on public.profiles to authenticated;
 -- reading_board: plan_books가 있으면 그 권들만 진행률에 계산
+
+-- ─── 완독 기록, 하루 목표 기록 (2026-11-04) ───
+-- plan_achievements: 목표를 다 읽은 기록 (본인만 보기·추가·삭제)
+-- daily_goal_history: 하루 목표를 바꾼 날과 목표 (본인만, 오늘 날짜만 추가·수정)
