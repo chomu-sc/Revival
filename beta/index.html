@@ -230,6 +230,10 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .rd.miss{border-color:var(--chip-line);color:var(--muted)}
 .rd.none,.rd.future{color:var(--faint)}
 .rd.today{box-shadow:0 0 0 2px var(--fg) inset}
+.news{gap:10px}.news h2{font-size:17px}
+.news-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+.news ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.6}
+.news li::marker{color:var(--accent)}
 .cheer{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55}
 .cheer p{margin:0}
 .cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
@@ -429,7 +433,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0100';
+const APP_VERSION = '2026.11.04-0120';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -841,7 +845,7 @@ const demoBar = () => {
 
 function navHtml(){
   const t = [['pray','기도',I.hands(22)],['bible','성경',I.book(22)],['answers','응답',I.box(22)],['me','내 정보',I.user(22)]];
-  const dot = isSuper() && unseenInquiries() > 0;
+  const dot = (isSuper() && unseenInquiries() > 0) || newsUnseen();
   return `<nav class="nav" aria-label="메뉴">${t.map(([k,l,svg]) => `<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}><span class="nav-ic">${svg}${k==='me' && dot ? '<i class="nav-dot" aria-label="새 소식"></i>' : ''}</span>${l}</button>`).join('')}</nav>`;
 }
 function roleBadge(g = curGroup()){
@@ -1161,7 +1165,7 @@ function calHtml(target, value, min, max){
 const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
 function subHead(title, back='내 정보', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
 function meHtml(){
-  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, news:pageNews, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
@@ -1176,7 +1180,7 @@ function meHtml(){
     <section class="group"><h2>설정</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${fontLabel()}`,'data-v="theme"')}</div></section>
-    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
+    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','업데이트 소식', newsUnseen() ? '<span class="pill warn">NEW</span>' : CHANGELOG[0].date, 'data-v="news"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.filter(q => !q.hidden).length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
     <p class="hint" style="text-align:center;margin:0">버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p>
@@ -1304,6 +1308,29 @@ function bookPickHtml(sel){
     return `<div class="bp-head"><b>${SCOPE_NAME[t]} <span class="hint num">${list.filter(b => set.has(b.id)).length} / ${list.length}권</span></b><button type="button" class="link-btn" data-act="planBooksAll" data-v="${t}">${all ? '모두 빼기' : '모두 고르기'}</button></div>
       <div class="bp-grid">${list.map(b => `<button type="button" class="chip ${set.has(b.id)?'on':''}" data-act="planBook" data-v="${b.id}" aria-pressed="${set.has(b.id)}">${b.name}</button>`).join('')}</div>`; };
   return `<div class="book-pick">${part('OT')}${part('NT')}</div>`;
+}
+const CHANGELOG = [
+  {id:'2026-11-04', date:'2026. 11. 4', title:'통독 목표가 더 자유로워졌어요', items:[
+    '통독 범위를 구약·신약뿐 아니라 <b>성경 권 단위로 직접 고를 수</b> 있어요. (내 정보 → 통독 목표 → 직접 고르기)',
+    '<b>하루 목표 장 수</b>를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.',
+    '목표를 다 읽으면 <b>완독 기록</b>에 언제부터 언제까지 무엇을 읽었는지 남아요.',
+    '하루 목표를 정하면 <b>달력으로 달별 기록</b>을 볼 수 있고, 한 달을 돌아보는 칭찬과 격려의 메시지를 전해요.',
+    '+/− 버튼을 <b>꾹 누르면</b> 숫자가 계속 바뀌어요.',
+    '구약 탭을 눌러도 신약으로 돌아가던 문제를 고쳤어요.']},
+  {id:'2026-11-01', date:'2026. 11. 1', title:'가로 화면과 읽은 장 표시', items:[
+    '휴대폰을 <b>가로로 돌려도</b> 편하게 볼 수 있어요. 메뉴는 왼쪽에, 기도와 성경은 두 칸으로 나뉘어요.',
+    '여러 번 읽은 장은 칸 오른쪽 위에 <b>점</b>으로 횟수를 보여줘요.',
+    '읽기 시작한 성경은 이름이 연하게, 다 읽은 성경은 조금 더 진하게 칠해져요.',
+    '문의할 때 <b>사진</b>을 넣을 수 있어요.',
+    '오늘이 통독 목표 기간 밖이면 성경 탭에서 알려줘요.']},
+];
+const newsUnseen = () => (lsGet('seenNews') || '') < CHANGELOG[0].id;
+function pageNews(){
+  if(newsUnseen()) setTimeout(() => { lsSet('seenNews', CHANGELOG[0].id); }, 0);
+  return subHead('업데이트 소식') + `<div class="settings pad">${CHANGELOG.map((c,i) => `<section class="panel news">
+      <div class="news-head"><span class="num">${c.date}</span>${i === 0 ? '<span class="pill">최근 업데이트</span>' : ''}</div>
+      <h2>${c.title}</h2><ul>${c.items.map(x => `<li>${x}</li>`).join('')}</ul></section>`).join('')}
+    <p class="hint" style="text-align:center;margin:0">지금 버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p></div>`;
 }
 function pagePrivacy(){
   const p = S.profile;
