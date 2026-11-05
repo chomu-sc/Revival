@@ -440,7 +440,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '0.4';
+const APP_VERSION = '0.4.1';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1317,9 +1317,6 @@ function bookPickHtml(sel){
   return `<div class="book-pick">${part('OT')}${part('NT')}</div>`;
 }
 const CHANGELOG = [
-  {id:'2026-11-05', ver:'0.4', date:'2026. 11. 5', title:'업데이트 소식을 한눈에', items:[
-    '내 정보 → <b>업데이트 소식</b>에서 앱이 어떻게 바뀌었는지 볼 수 있어요.',
-    '새 업데이트가 있으면 <b>NEW</b> 표시로 알려줘요.']},
   {id:'2026-11-04', ver:'0.3', date:'2026. 11. 4', title:'통독 목표가 더 자유로워졌어요', items:[
     '통독 범위를 구약·신약뿐 아니라 <b>성경 권 단위로 직접 고를 수</b> 있어요. (내 정보 → 통독 목표 → 직접 고르기)',
     '<b>하루 목표 장 수</b>를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.',
@@ -1332,12 +1329,6 @@ const CHANGELOG = [
     '읽기 시작한 성경은 이름이 연하게, 다 읽은 성경은 조금 더 진하게 칠해져요.',
     '문의할 때 <b>사진</b>을 넣을 수 있어요.',
     '오늘이 통독 목표 기간 밖이면 성경 탭에서 알려줘요.']},
-  {id:'2026-11-01', ver:'0.1', date:'2026. 11. 1', title:'「기도와 말씀」을 시작했어요', items:[
-    '기도제목을 별명이나 익명으로 나누고, 「기도했어요」로 함께 기도해요.',
-    '응답을 O · X · Wait · His Way로 기록하고 응답 보관함에 모아요.',
-    '성경 통독 목표를 정하고 읽은 장을 체크하면 진행률과 통계를 보여줘요.',
-    '같은 서버 사람들과 함께 읽는 진행률을 나눠요.',
-    '라이트·다크 모드와 글자 크기를 바꿀 수 있어요.']},
 ];
 const newsUnseen = () => (lsGet('seenNews') || '') < CHANGELOG[0].id;
 function pageNews(){
