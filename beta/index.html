@@ -230,7 +230,13 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .rd.miss{border-color:var(--chip-line);color:var(--muted)}
 .rd.none,.rd.future{color:var(--faint)}
 .rd.today{box-shadow:0 0 0 2px var(--fg) inset}
-.news{gap:10px}.news h2{font-size:17px}
+.news{gap:10px}.news h2{font-size:17px;margin:0}
+.news summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.news summary::-webkit-details-marker{display:none}
+.news-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.news .chev{color:var(--faint);display:inline-flex;transition:transform .2s ease}
+.news[open] .chev{transform:rotate(90deg)}
+.news ul{margin-top:4px}
 .news-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
 .news ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.6}
 .news li::marker{color:var(--accent)}
@@ -433,7 +439,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '2026.11.04-0120';
+const APP_VERSION = '2026.11.05-0950';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1314,9 +1320,8 @@ const CHANGELOG = [
     '통독 범위를 구약·신약뿐 아니라 <b>성경 권 단위로 직접 고를 수</b> 있어요. (내 정보 → 통독 목표 → 직접 고르기)',
     '<b>하루 목표 장 수</b>를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.',
     '목표를 다 읽으면 <b>완독 기록</b>에 언제부터 언제까지 무엇을 읽었는지 남아요.',
-    '하루 목표를 정하면 <b>달력으로 달별 기록</b>을 볼 수 있고, 한 달을 돌아보는 칭찬과 격려의 메시지를 전해요.',
-    '+/− 버튼을 <b>꾹 누르면</b> 숫자가 계속 바뀌어요.',
-    '구약 탭을 눌러도 신약으로 돌아가던 문제를 고쳤어요.']},
+    '하루 목표를 정하면 <b>달력으로 달별 기록</b>을 볼 수 있어요.',
+    '사소한 버그가 수정되었습니다.']},
   {id:'2026-11-01', date:'2026. 11. 1', title:'가로 화면과 읽은 장 표시', items:[
     '휴대폰을 <b>가로로 돌려도</b> 편하게 볼 수 있어요. 메뉴는 왼쪽에, 기도와 성경은 두 칸으로 나뉘어요.',
     '여러 번 읽은 장은 칸 오른쪽 위에 <b>점</b>으로 횟수를 보여줘요.',
@@ -1327,9 +1332,10 @@ const CHANGELOG = [
 const newsUnseen = () => (lsGet('seenNews') || '') < CHANGELOG[0].id;
 function pageNews(){
   if(newsUnseen()) setTimeout(() => { lsSet('seenNews', CHANGELOG[0].id); }, 0);
-  return subHead('업데이트 소식') + `<div class="settings pad">${CHANGELOG.map((c,i) => `<section class="panel news">
-      <div class="news-head"><span class="num">${c.date}</span>${i === 0 ? '<span class="pill">최근 업데이트</span>' : ''}</div>
-      <h2>${c.title}</h2><ul>${c.items.map(x => `<li>${x}</li>`).join('')}</ul></section>`).join('')}
+  return subHead('업데이트 소식') + `<div class="settings pad">${CHANGELOG.map((c,i) => `<details class="panel news" ${i === 0 ? 'open' : ''}>
+      <summary><div class="news-head"><span class="num">${c.date}</span>${i === 0 ? '<span class="pill">최근 업데이트</span>' : ''}</div>
+      <div class="news-title"><h2>${c.title}</h2><span class="chev" aria-hidden="true">${I.right(18)}</span></div></summary>
+      <ul>${c.items.map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}
     <p class="hint" style="text-align:center;margin:0">지금 버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p></div>`;
 }
 function pagePrivacy(){
