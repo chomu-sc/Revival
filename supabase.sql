@@ -656,3 +656,10 @@ grant update (plan_books, plan_daily) on public.profiles to authenticated;
 -- ─── 완독 기록, 하루 목표 기록 (2026-11-04) ───
 -- plan_achievements: 목표를 다 읽은 기록 (본인만 보기·추가·삭제)
 -- daily_goal_history: 하루 목표를 바꾼 날과 목표 (본인만, 오늘 날짜만 추가·수정)
+
+-- ─── 기도·말씀 알림, 안 읽은 문의 배지 (2026-11-08) ───
+-- extensions: pg_cron, pg_net
+-- reminders(user_id, kind 'pray'|'word', at_time KST, enabled, last_sent_on): 본인만 읽기·쓰기
+-- inquiry_reads(user_id, seen_at): 총 관리자가 받은 문의를 마지막으로 본 때
+-- claim_due_reminders() / due_reminders_exist(): service_role 전용
+-- cron 'send-reminders' (매분): 보낼 알림이 있을 때만 Edge Function send-reminders 호출 (x-cron-secret 확인)
