@@ -663,3 +663,7 @@ grant update (plan_books, plan_daily) on public.profiles to authenticated;
 -- inquiry_reads(user_id, seen_at): 총 관리자가 받은 문의를 마지막으로 본 때
 -- claim_due_reminders() / due_reminders_exist(): service_role 전용
 -- cron 'send-reminders' (매분): 보낼 알림이 있을 때만 Edge Function send-reminders 호출 (x-cron-secret 확인)
+
+-- ─── 업데이트 소식 (2026-11-08) ───
+-- app_news(id, ver, released_on, title, items text[]): 로그인한 사람 모두 읽기, 총 관리자만 쓰기·고치기·지우기
+-- 항목 안의 **굵게** 는 앱에서 굵은 글씨로 보여줘요
