@@ -165,6 +165,7 @@ h1,h2,h3{text-wrap:balance}
 .nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--faint);min-height:52px}
 .nav button.on{color:var(--accent);font-weight:700}
 .nav-ic{position:relative;display:inline-flex}
+.nav-badge{position:absolute;top:-5px;left:calc(100% - 9px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:800;font-style:normal;line-height:18px;text-align:center;border:2px solid var(--surface);box-sizing:content-box}
 .nav-dot{position:absolute;top:-1px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--warn);border:2px solid var(--surface)}
 .demo{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-block:6px;background:var(--accent-tint);color:var(--accent-ink);font-size:12px}
 .demo button{background:none;border:none;color:var(--accent-ink);font-size:12px;font-weight:700;text-decoration:underline;min-height:32px}
@@ -241,6 +242,11 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .news-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
 .news ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.6}
 .news li::marker{color:var(--accent)}
+.remind{gap:10px}
+.remind-time{display:flex;align-items:center;gap:10px;font-size:14px}
+.time-input{font:inherit;font-size:17px;font-weight:700;padding:8px 12px;border-radius:12px;border:1.5px solid var(--chip-line);background:var(--surface);color:var(--fg);min-width:120px}
+.time-input:disabled{opacity:.45}
+.remind:not(.on) .remind-time > span:first-child{color:var(--faint)}
 .cheer{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55}
 .cheer p{margin:0}
 .cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
@@ -440,7 +446,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '0.4.1';
+const APP_VERSION = '0.5';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -659,6 +665,13 @@ function supabaseApi(){
     savePush: (endpoint, p256dh, auth) => rpc('save_push_subscription', {p_endpoint:endpoint, p_p256dh:p256dh, p_auth:auth}),
     removePush: endpoint => rpc('remove_push_subscription', {p_endpoint:endpoint}),
     hasPush: endpoint => rpc('has_push_subscription', {p_endpoint:endpoint}),
+    loadNews: () => sb.from('app_news').select('*').order('released_on', {ascending:false}).order('id', {ascending:false}).then(chk),
+    saveNews: o => (o.id ? sb.from('app_news').update({ver:o.ver, released_on:o.released_on, title:o.title, items:o.items, updated_at:new Date().toISOString()}).eq('id', o.id) : sb.from('app_news').insert({ver:o.ver, released_on:o.released_on, title:o.title, items:o.items})).then(chk),
+    deleteNews: id => sb.from('app_news').delete().eq('id', id).then(chk),
+    loadReminders: () => sb.from('reminders').select('kind,at_time,enabled').then(chk),
+    saveReminder: (kind, at_time, enabled) => sb.from('reminders').upsert({user_id:uid(), kind, at_time, enabled}, {onConflict:'user_id,kind'}).then(chk),
+    loadInquirySeen: () => sb.from('inquiry_reads').select('seen_at').maybeSingle().then(chk),
+    markInquirySeen: () => sb.from('inquiry_reads').upsert({user_id:uid(), seen_at:new Date().toISOString()}, {onConflict:'user_id'}).then(chk),
     adminInquiries: () => rpc('admin_inquiries_v2'),
     hideInquiry: (id, hidden) => rpc('admin_set_inquiry_hidden', {p_id:id, p_hidden:hidden}),
     deleteInquiry: id => rpc('admin_delete_inquiry', {p_id:id}),
@@ -787,6 +800,12 @@ function demoApi(){
     async inquiryPhotos(ids){ const out = {}; ids.forEach(id => { if(DEMO_PHOTOS[id]) out[id] = DEMO_PHOTOS[id]; }); return out; },
     async removeInquiryPhotos(){ },
     async savePush(){ }, async removePush(){ }, async hasPush(){ return false; },
+    async loadReminders(){ return (db.reminders||[]).slice(); },
+    async loadNews(){ if(!db.news) db.news = NEWS_FALLBACK.map((n,i) => ({...n, id:NEWS_FALLBACK.length - i})); return db.news.slice().sort((a,b) => a.released_on < b.released_on ? 1 : a.released_on > b.released_on ? -1 : b.id - a.id); },
+    async saveNews(o){ if(o.id){ db.news = db.news.map(n => n.id === o.id ? {...n, ...o} : n); } else db.news.push({...o, id: Math.max(0, ...db.news.map(n => n.id)) + 1}); save(); },
+    async deleteNews(id){ db.news = db.news.filter(n => n.id !== id); save(); },
+    async saveReminder(kind, at_time, enabled){ db.reminders = (db.reminders||[]).filter(r => r.kind !== kind); db.reminders.push({kind, at_time, enabled}); save(); },
+    async loadInquirySeen(){ return null; }, async markInquirySeen(){ },
     async adminInquiries(){ if(!db.profile.is_super_admin) deny(); return (db.inquiries||[]).map(q => ({id:q.id, nickname:nick(q.user_id), email: q.user_id === ME ? db.profile.email : `${q.user_id}@example.com`, group_name: db.groups.find(g => g.id === q.group_id)?.name || null, content:q.content, created_at:q.created_at, hidden:!!q.hidden})).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); },
     async hideInquiry(id, hidden){ if(!db.profile.is_super_admin) deny(); const q = (db.inquiries||[]).find(x => x.id === id); if(q) q.hidden = hidden; save(); },
     async deleteInquiry(id){ if(!db.profile.is_super_admin) deny(); db.inquiries = (db.inquiries||[]).filter(x => x.id !== id); save(); },
@@ -812,6 +831,7 @@ const I = {
   right: s => ic('<path d="m9 6 6 6-6 6"/>',s), left: s => ic('<path d="m15 6-6 6 6 6"/>',s), down: s => ic('<path d="m6 9 6 6 6-6"/>',s),
   shield: s => ic('<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',s),
   copy: s => ic('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',s),
+  gear: s => ic('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',s),
   bell: s => ic('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',s),
   mail: s => ic('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',s),
   users: s => ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/>',s),
@@ -851,9 +871,9 @@ const demoBar = () => {
 };
 
 function navHtml(){
-  const t = [['pray','기도',I.hands(22)],['bible','성경',I.book(22)],['answers','응답',I.box(22)],['me','내 정보',I.user(22)]];
-  const dot = (isSuper() && unseenInquiries() > 0) || newsUnseen();
-  return `<nav class="nav" aria-label="메뉴">${t.map(([k,l,svg]) => `<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}><span class="nav-ic">${svg}${k==='me' && dot ? '<i class="nav-dot" aria-label="새 소식"></i>' : ''}</span>${l}</button>`).join('')}</nav>`;
+  const t = [['pray','기도',I.hands(22)],['bible','성경',I.book(22)],['answers','응답',I.box(22)],['me','설정',I.gear(22)]];
+  const navCount = isSuper() ? unseenInquiries() : 0, dot = newsUnseen();
+  return `<nav class="nav" aria-label="메뉴">${t.map(([k,l,svg]) => `<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}><span class="nav-ic">${svg}${k==='me' && navCount ? `<i class="nav-badge num" aria-label="새 문의 ${navCount}건">${navCount > 99 ? '99+' : navCount}</i>` : k==='me' && dot ? '<i class="nav-dot" aria-label="새 소식"></i>' : ''}</span>${l}</button>`).join('')}</nav>`;
 }
 function roleBadge(g = curGroup()){
   if(isSuper()) return `<span class="pill">${I.shield(13)}총 관리자</span>`;
@@ -1050,7 +1070,7 @@ function statsHtml(pr){
   const target = per > 0 ? `<div class="target" style="bottom:${Math.round(per/scaleMax*H)}px"></div>` : '';
   let goalText;
   if(pr.remaining <= 0) goalText = `<span class="eyebrow">목표 달성</span><span class="per">완독!</span><p>${planLabel(pr)} 목표를 이뤘어요.</p>`;
-  else if(pr.daysLeft === 0) goalText = `<span class="eyebrow">기간이 끝났어요</span><span class="per num">${floor1(pr.pct)}%</span><p>남은 ${pr.remaining.toLocaleString('ko-KR')}장 · 내 정보에서 기간을 늘릴 수 있어요</p>`;
+  else if(pr.daysLeft === 0) goalText = `<span class="eyebrow">기간이 끝났어요</span><span class="per num">${floor1(pr.pct)}%</span><p>남은 ${pr.remaining.toLocaleString('ko-KR')}장 · 설정에서 기간을 늘릴 수 있어요</p>`;
   else if(pr.daily){
     const late = pr.finishOn && pr.finishOn > pr.end ? daysBetween(pr.end, pr.finishOn) : 0;
     goalText = `<span class="eyebrow">나의 하루 목표</span><span class="per num">${fmtN(pr.daily)}장</span><p class="num">오늘 읽은 분량 <b>${pr.todayCount} / ${fmtN(pr.daily)}장</b><br>이대로 읽으면 <b>${md(pr.finishOn)}</b>에 끝나요${late ? `<br><span style="color:var(--warn)">목표 기간보다 ${late}일 늦어요 · 기간 안에 끝내려면 하루 ${ceil1(pr.perDay)}장</span>` : ''}</p>`;
@@ -1170,24 +1190,25 @@ function calHtml(target, value, min, max){
 
 /* ─── 내 정보 ─── */
 const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
-function subHead(title, back='내 정보', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
+function subHead(title, back='설정', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
 function meHtml(){
-  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, news:pageNews, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, news:pageNews, newsEdit:pageNewsEdit, notify:pageNotify, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
   const unseen = unseenInquiries();
   const adminSection = isSuper() ? menuRow('page',`${I.shield(16)} 서버 관리`,'총 관리자','data-v="admin"')
     : (g?.my_role === 'admin' ? menuRow('adminGroup',`${I.shield(16)} 이 서버 관리`,'서버 관리자',`data-id="${g.id}"`) : '');
-  return `<div class="topbar pad"><div><h1>내 정보</h1><span class="hint">${esc(S.session?.user?.email || '')}</span></div></div>` + demoBar() +
+  return `<div class="topbar pad"><div><h1>설정</h1><span class="hint">${esc(S.session?.user?.email || '')}</span></div></div>` + demoBar() +
   `<div class="settings pad">
     <section class="group"><h2>프로필</h2><div class="menu">${menuRow('page','별명',esc(p.nickname),'data-v="nick"')}${menuRow('page','계정','비밀번호 · 탈퇴','data-v="account"')}</div></section>
     ${serverSection ? `<section class="group"><h2>서버</h2>${serverSection}</section>` : ''}
     <section class="group"><h2>성경 통독</h2><div class="menu">${menuRow('page','통독 목표',planLabel(pr),'data-v="plan"')}</div></section>
-    <section class="group"><h2>설정</h2><div class="menu">
+    <section class="group"><h2>알림</h2><div class="menu">${menuRow('page','기도와 말씀 알림', reminderLabel(), 'data-v="notify"')}</div></section>
+    <section class="group"><h2>공개와 화면</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${fontLabel()}`,'data-v="theme"')}</div></section>
-    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','업데이트 소식', newsUnseen() ? '<span class="pill warn">NEW</span>' : 'v' + CHANGELOG[0].ver, 'data-v="news"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
+    <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','업데이트 소식', newsUnseen() ? '<span class="pill warn">NEW</span>' : 'v' + esc(newsLatest()?.ver || ''), 'data-v="news"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.filter(q => !q.hidden).length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
     <p class="hint" style="text-align:center;margin:0">버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p>
@@ -1316,28 +1337,72 @@ function bookPickHtml(sel){
       <div class="bp-grid">${list.map(b => `<button type="button" class="chip ${set.has(b.id)?'on':''}" data-act="planBook" data-v="${b.id}" aria-pressed="${set.has(b.id)}">${b.name}</button>`).join('')}</div>`; };
   return `<div class="book-pick">${part('OT')}${part('NT')}</div>`;
 }
-const CHANGELOG = [
-  {id:'2026-11-04', ver:'0.3', date:'2026. 11. 4', title:'통독 목표가 더 자유로워졌어요', items:[
-    '통독 범위를 구약·신약뿐 아니라 <b>성경 권 단위로 직접 고를 수</b> 있어요. (내 정보 → 통독 목표 → 직접 고르기)',
-    '<b>하루 목표 장 수</b>를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.',
-    '목표를 다 읽으면 <b>완독 기록</b>에 언제부터 언제까지 무엇을 읽었는지 남아요.',
-    '하루 목표를 정하면 <b>달력으로 달별 기록</b>을 볼 수 있어요.',
-    '사소한 버그가 수정되었습니다.']},
-  {id:'2026-11-01b', ver:'0.2', date:'2026. 11. 1', title:'가로 화면과 읽은 장 표시', items:[
-    '휴대폰을 <b>가로로 돌려도</b> 편하게 볼 수 있어요. 메뉴는 왼쪽에, 기도와 성경은 두 칸으로 나뉘어요.',
-    '여러 번 읽은 장은 칸 오른쪽 위에 <b>점</b>으로 횟수를 보여줘요.',
-    '읽기 시작한 성경은 이름이 연하게, 다 읽은 성경은 조금 더 진하게 칠해져요.',
-    '문의할 때 <b>사진</b>을 넣을 수 있어요.',
-    '오늘이 통독 목표 기간 밖이면 성경 탭에서 알려줘요.']},
+/* ─── 업데이트 소식: 서버(app_news)에 저장, 총 관리자가 앱에서 고쳐요 ─── */
+const NEWS_FALLBACK = [
+  {id:-5, ver:'0.5', released_on:'2026-11-08', title:'기도와 말씀 알림', items:['정한 시간에 **「기도할 시간이에요」**, **「말씀 읽을 시간이에요」**라고 알려줘요. (설정 → 기도와 말씀 알림)','말씀 알림에는 오늘 읽은 분량과 하루 목표가 함께 나와요.','「내 정보」 탭의 이름이 **「설정」**으로 바뀌었어요.']},
+  {id:-4, ver:'0.4', released_on:'2026-11-05', title:'업데이트 소식을 한눈에', items:['설정 → **업데이트 소식**에서 앱이 어떻게 바뀌었는지 볼 수 있어요.','새 업데이트가 있으면 **NEW** 표시로 알려줘요.']},
+  {id:-3, ver:'0.3', released_on:'2026-11-04', title:'통독 목표가 더 자유로워졌어요', items:['통독 범위를 구약·신약뿐 아니라 **성경 권 단위로 직접 고를 수** 있어요. (설정 → 통독 목표 → 직접 고르기)','**하루 목표 장 수**를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.','목표를 다 읽으면 **완독 기록**에 언제부터 언제까지 무엇을 읽었는지 남아요.','하루 목표를 정하면 **달력으로 달별 기록**을 볼 수 있어요.','사소한 버그가 수정되었습니다.']},
+  {id:-2, ver:'0.2', released_on:'2026-11-01', title:'가로 화면과 읽은 장 표시', items:['휴대폰을 **가로로 돌려도** 편하게 볼 수 있어요. 메뉴는 왼쪽에, 기도와 성경은 두 칸으로 나뉘어요.','여러 번 읽은 장은 칸 오른쪽 위에 **점**으로 횟수를 보여줘요.','읽기 시작한 성경은 이름이 연하게, 다 읽은 성경은 조금 더 진하게 칠해져요.','문의할 때 **사진**을 넣을 수 있어요.','오늘이 통독 목표 기간 밖이면 성경 탭에서 알려줘요.']},
+  {id:-1, ver:'0.1', released_on:'2026-11-01', title:'「기도와 말씀」을 시작했어요', items:['기도제목을 별명이나 익명으로 나누고, 「기도했어요」로 함께 기도해요.','응답을 O · X · Wait · His Way로 기록하고 응답 보관함에 모아요.','성경 통독 목표를 정하고 읽은 장을 체크하면 진행률과 통계를 보여줘요.','같은 서버 사람들과 함께 읽는 진행률을 나눠요.','라이트·다크 모드와 글자 크기를 바꿀 수 있어요.']},
 ];
-const newsUnseen = () => (lsGet('seenNews') || '') < CHANGELOG[0].id;
+const newsList = () => (S.news && S.news.length) ? S.news : NEWS_FALLBACK;
+const newsLatest = () => newsList()[0];
+const newsUnseen = () => { const l = newsLatest(); return !!l && (lsGet('seenNewsVer') || '') !== l.ver; };
+const newsText = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+async function loadNews(){ try{ const n = await API.loadNews(); if(n && n.length) S.news = n; }catch(e){} }
 function pageNews(){
-  if(newsUnseen()) setTimeout(() => { lsSet('seenNews', CHANGELOG[0].id); }, 0);
-  return subHead('업데이트 소식') + `<div class="settings pad">${CHANGELOG.map((c,i) => `<details class="panel news" ${i === 0 ? 'open' : ''}>
-      <summary><div class="news-head"><span class="num"><b class="ver">v${c.ver}</b> · ${c.date}</span>${i === 0 ? '<span class="pill">최근 업데이트</span>' : ''}</div>
-      <div class="news-title"><h2>${c.title}</h2><span class="chev" aria-hidden="true">${I.right(18)}</span></div></summary>
-      <ul>${c.items.map(x => `<li>${x}</li>`).join('')}</ul></details>`).join('')}
+  const list = newsList(), l = list[0];
+  if(l && newsUnseen()) setTimeout(() => { lsSet('seenNewsVer', l.ver); }, 0);
+  const admin = isSuper();
+  return subHead('업데이트 소식') + `<div class="settings pad">
+    ${admin ? `<button class="btn btn-ghost btn-block" data-act="newsEdit" data-id="new">${I.plus(18)}새 소식 쓰기</button>` : ''}
+    ${list.map((c,i) => `<details class="panel news" ${i === 0 ? 'open' : ''}>
+      <summary><div class="news-head"><span class="num"><b class="ver">v${esc(c.ver)}</b> · ${ymd(c.released_on)}</span>${i === 0 ? '<span class="pill">최근 업데이트</span>' : ''}</div>
+      <div class="news-title"><h2>${esc(c.title)}</h2><span class="chev" aria-hidden="true">${I.right(18)}</span></div></summary>
+      <ul>${(c.items||[]).map(x => `<li>${newsText(x)}</li>`).join('')}</ul>
+      ${admin && c.id > 0 ? `<div class="row-actions" style="margin-top:12px"><button class="btn btn-sm btn-ghost" data-act="newsEdit" data-id="${c.id}">고치기</button></div>` : ''}</details>`).join('')}
     <p class="hint" style="text-align:center;margin:0">지금 버전 ${APP_VERSION}${IS_BETA ? ' · 테스트 앱' : ''}</p></div>`;
+}
+function pageNewsEdit(){
+  const d = S.draft.news || {};
+  return subHead(d.id ? '소식 고치기' : '새 소식 쓰기', '업데이트 소식', 'newsBack') + `<div class="settings pad">
+    <form class="panel" data-form="news" style="gap:14px">
+      <div class="field-row" style="display:grid;grid-template-columns:110px 1fr;gap:10px">
+        <div class="field"><label class="label" for="news-ver">버전</label><input id="news-ver" type="text" data-model="news.ver" value="${esc(d.ver||'')}" placeholder="0.6" maxlength="20" autocomplete="off"></div>
+        <div class="field"><label class="label" for="news-date">날짜</label><input id="news-date" class="input" type="date" data-model="news.released_on" value="${esc(d.released_on||'')}"></div>
+      </div>
+      <div class="field"><label class="label" for="news-title">제목</label><input id="news-title" type="text" data-model="news.title" value="${esc(d.title||'')}" maxlength="80" placeholder="예: 기도와 말씀 알림"></div>
+      <div class="field"><label class="label" for="news-items">바뀐 점</label><textarea id="news-items" data-model="news.itemsText" rows="8" placeholder="한 줄에 하나씩 적어 주세요">${esc(d.itemsText||'')}</textarea>
+        <span class="hint">한 줄이 한 항목이 돼요. **이렇게** 감싸면 굵게 보여요.</span></div>
+      <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>저장</button>
+      ${d.id ? `<button class="btn btn-ghost btn-block" type="button" data-act="newsDelete" style="color:var(--warn)">이 소식 지우기</button>` : ''}
+    </form></div>`;
+}
+const REMIND = {pray:{label:'기도 알림', desc:'「기도할 시간이에요」라고 알려줘요', def:'07:00'}, word:{label:'말씀 알림', desc:'「말씀 읽을 시간이에요」라고 오늘 읽은 분량과 함께 알려줘요', def:'21:00'}};
+const hhmm = t => String(t || '').slice(0,5);
+function reminderLabel(){
+  const on = (S.reminders || []).filter(r => r.enabled);
+  if(!on.length) return '꺼짐';
+  return ['pray','word'].map(k => on.find(r => r.kind === k)).filter(Boolean).map(r => `${r.kind === 'pray' ? '기도' : '말씀'} ${fmtTime(r.at_time)}`).join(' · ');
+}
+function fmtTime(t){ const [h,m] = hhmm(t).split(':').map(Number); if(isNaN(h)) return ''; return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${pad2(m)}`; }
+async function loadReminders(){ try{ S.reminders = (await API.loadReminders()) || []; }catch(e){ S.reminders = S.reminders || []; } }
+function openNotifyPage(){ refreshPushState().then(render); loadReminders().then(render); }
+function pageNotify(){
+  const st = PUSH.state, get = k => (S.reminders || []).find(r => r.kind === k);
+  let status = '';
+  if(st === 'demo') status = '체험 모드에서는 알림이 오지 않아요. 시간 설정만 해 볼 수 있어요.';
+  else if(st === 'ios-install') status = '아이폰은 <b>홈 화면에 추가한 앱</b>에서만 알림을 받을 수 있어요.';
+  else if(st === 'unsupported') status = '이 브라우저에서는 알림을 받을 수 없어요. Chrome이나 Safari 최신 버전을 써 주세요.';
+  else if(st === 'denied') status = '알림이 막혀 있어요. 휴대폰이나 브라우저 설정에서 이 앱의 알림을 <b>허용</b>으로 바꿔 주세요.';
+  const card = k => { const r = get(k), on = !!r?.enabled, t = hhmm(r?.at_time) || REMIND[k].def;
+    return `<section class="panel remind ${on ? 'on' : ''}">
+      <label class="switchrow"><span><b>${REMIND[k].label}</b><small>${REMIND[k].desc}</small></span><input class="sw" type="checkbox" data-act="remindToggle" data-k="${k}" ${on ? 'checked' : ''}></label>
+      <div class="remind-time"><span>매일</span><input type="time" class="time-input" id="remind-${k}" data-k="${k}" value="${t}" ${on ? '' : 'disabled'} aria-label="${REMIND[k].label} 시간"><span class="hint">${on ? fmtTime(t) + '에 알려줘요' : '꺼져 있어요'}</span></div></section>`; };
+  return subHead('기도와 말씀 알림') + `<div class="settings pad">
+    ${status ? `<section class="panel push-panel"><div class="push-row">${I.bell(20)}<p>${status}</p></div>${st === 'ios-install' ? `<button class="btn btn-ghost btn-block" data-act="page" data-v="install">홈 화면에 추가하는 방법</button>` : ''}</section>` : ''}
+    ${card('pray')}${card('word')}
+    <p class="hint" style="margin:0;text-align:center">알림을 켠 모든 기기로 함께 와요.</p></div>`;
 }
 function pagePrivacy(){
   const p = S.profile;
@@ -1544,12 +1609,23 @@ function errMsg(e){
 }
 
 /* ─── 데이터 흐름 ─── */
-const unseenInquiries = () => { const t = Number(lsGet('inboxSeenAt') || 0); return S.inbox.filter(q => !q.hidden && new Date(q.created_at).getTime() > t).length; };
+const inboxSeenTime = () => Math.max(Number(lsGet('inboxSeenAt') || 0), S.inboxSeenServer || 0);
+const unseenInquiries = () => { const t = inboxSeenTime(); return S.inbox.filter(q => !q.hidden && new Date(q.created_at).getTime() > t).length; };
+function updateAppBadge(){
+  try{
+    if(!('setAppBadge' in navigator) || IS_DEMO) return;
+    const n = isSuper() ? unseenInquiries() : 0;
+    n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge();
+  }catch(e){}
+}
+function markInboxSeen(){ lsSet('inboxSeenAt', String(Date.now())); S.inboxSeenServer = Date.now(); API.markInquirySeen().catch(() => {}); updateAppBadge(); }
 async function loadInquiries(){
   if(isSuper()){
     try{ S.inbox = (await API.adminInquiries()) || []; }catch(e){ S.inbox = []; }
+    try{ const r = await API.loadInquirySeen(); if(r?.seen_at) S.inboxSeenServer = new Date(r.seen_at).getTime(); }catch(e){}
     try{ S.inboxPhotos = await API.inquiryPhotos(S.inbox.map(q => q.id)); }catch(e){ S.inboxPhotos = {}; }
   } else S.inbox = [];
+  updateAppBadge();
 }
 function pickGroup(){
   if(!S.groups.some(g => g.id === S.groupId)){
@@ -1583,11 +1659,11 @@ async function boot(){
   try{
     const [profile, readings] = await Promise.all([API.loadProfile(), API.loadReadings()]);
     S.profile = profile; S.readings = readings || [];
-    await loadRecords(); syncAchievement().then(ok => { if(ok) render(); });
+    await loadRecords(); await loadReminders(); await loadNews(); syncAchievement().then(ok => { if(ok) render(); });
     if(S.pendingCode){ const c = S.pendingCode; S.pendingCode = null; try{ S.groupId = await API.joinGroup(c); lsSet('groupId', S.groupId); S.codeMsg = null; }catch(e){ S.codeMsg = errMsg(e); } }
     await loadGroups(); await loadGroupData(); await loadInquiries();
   }catch(e){ toast(errMsg(e)); }
-  if(location.hash === '#inbox' && isSuper()){ S.tab = 'me'; S.page = 'inbox'; refreshPushState().then(render); loadInquiries().then(() => { render(); lsSet('inboxSeenAt', String(Date.now())); }).catch(()=>{}); }
+  routeHash();
   if(location.hash){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
   S.ready = true; render();
 }
@@ -1710,8 +1786,9 @@ const ACT = {
       if(!IS_DEMO && pushSupported() && Notification.permission === 'default') requestPushFromGesture();
       else if(!IS_DEMO && pushSupported() && Notification.permission === 'granted') subscribePush().catch(() => {}).finally(() => refreshPushState().then(render));
       refreshPushState().then(render);
-      loadInquiries().then(() => { render(); lsSet('inboxSeenAt', String(Date.now())); }).catch(()=>{});
+      loadInquiries().then(() => { render(); markInboxSeen(); }).catch(()=>{});
     }
+    if(d.v === 'notify') openNotifyPage();
     render(); window.scrollTo(0,0);
   },
   back(){ S.page = null; S.cal = null; render(); window.scrollTo(0,0); },
@@ -1775,6 +1852,24 @@ const ACT = {
       if((d.daily || 0) !== prevDaily){ try{ await API.setDailyGoal(d.daily || null); }catch(e){} }
       await loadRecords(); syncAchievement(); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
   },
+  newsEdit(d){
+    const n = d.id === 'new' ? null : newsList().find(x => String(x.id) === String(d.id));
+    const today = appToday();
+    S.draft.news = n ? {id:n.id, ver:n.ver, released_on:n.released_on, title:n.title, itemsText:(n.items||[]).join('\n')} : {ver:'', released_on:today, title:'', itemsText:''};
+    S.page = 'newsEdit'; render(); window.scrollTo(0,0);
+  },
+  newsBack(){ S.page = 'news'; S.draft.news = null; render(); window.scrollTo(0,0); },
+  newsDelete(){ const id = S.draft.news?.id; if(!id) return; askConfirm('이 소식을 지울까요?', '모든 사람의 업데이트 소식에서 사라지고, 되돌릴 수 없어요.', '지우기', async () => { await API.deleteNews(id); await loadNews(); if(!S.news?.length) S.news = []; S.page = 'news'; S.draft.news = null; toast('소식을 지웠어요'); }); },
+  remindToggle(d, el){
+    const k = d.k, on = el.checked, t = document.getElementById('remind-' + k)?.value || REMIND[k].def;
+    const save = () => guard(async () => { await API.saveReminder(k, t, on); await loadReminders(); toast(on ? `매일 ${fmtTime(t)}에 ${k === 'pray' ? '기도' : '말씀'} 알림을 보내요` : '알림을 껐어요'); });
+    if(on && !IS_DEMO && pushSupported() && PUSH.state !== 'on'){
+      if(Notification.permission === 'denied'){ el.checked = false; PUSH.state = 'denied'; render(); toast('휴대폰 설정에서 알림을 허용해 주세요'); return; }
+      requestPushFromGesture('', save); return;
+    }
+    if(on && !IS_DEMO && !pushSupported()){ el.checked = false; toast(deviceKind() === 'ios' && !isStandalone() ? '홈 화면에 추가한 앱에서 켤 수 있어요' : '이 브라우저는 알림을 지원하지 않아요'); return; }
+    save();
+  },
   prefAnon(d,el){ guard(async () => { S.profile = await API.updateProfile({prayer_anon_default: el.checked}); toast('저장했어요'); }); },
   prefPublic(d,el){ guard(async () => { S.profile = await API.updateProfile({answer_public_default: el.checked}); toast('저장했어요'); }); },
   theme(d){
@@ -1788,6 +1883,17 @@ const ACT = {
   async demoRole(){ if(!IS_DEMO) return; await API.setSuper(!isSuper()); S.page = null; S.sheet = null; S.ready = false; render(); await boot(); toast(isSuper() ? '총 관리자 화면으로 바꿨어요' : '서버 관리자 화면으로 바꿨어요'); },
 };
 const FORMS = {
+  news(){
+    const d = S.draft.news || {};
+    const ver = (d.ver||'').trim().replace(/^v/i,''), title = (d.title||'').trim(), date = d.released_on;
+    const items = String(d.itemsText||'').split('\n').map(x => x.trim().replace(/^[-•·]\s*/, '')).filter(Boolean);
+    if(!ver){ toast('버전을 적어 주세요'); return; }
+    if(!date){ toast('날짜를 골라 주세요'); return; }
+    if(!title){ toast('제목을 적어 주세요'); return; }
+    if(!items.length){ toast('바뀐 점을 한 줄 이상 적어 주세요'); return; }
+    if(items.length > 30){ toast('바뀐 점은 30줄까지 적을 수 있어요'); return; }
+    guard(async () => { await API.saveNews({id:d.id, ver, released_on:date, title, items}); await loadNews(); S.page = 'news'; S.draft.news = null; toast('저장했어요'); window.scrollTo(0,0); });
+  },
   auth(){
     const email = document.getElementById('auth-email').value.trim(), pw = document.getElementById('auth-pw').value;
     const code = (document.getElementById('auth-code')?.value || '').trim();
@@ -1931,6 +2037,12 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('submit', e => { e.preventDefault(); FORMS[e.target.dataset.form]?.(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && S.viewPhoto){ S.viewPhoto = null; render(); } else if(e.key === 'Escape' && S.sheet){ S.sheet = null; render(); } });
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(!el.classList?.contains('time-input') || !el.value) return;
+  const k = el.dataset.k;
+  guard(async () => { await API.saveReminder(k, el.value, true); await loadReminders(); toast(`매일 ${fmtTime(el.value)}에 알려줘요`); });
+});
 document.addEventListener('change', async e => {
   if(e.target.id !== 'inq-photo') return;
   const files = [...(e.target.files || [])]; e.target.value = '';
@@ -1969,6 +2081,14 @@ async function checkForUpdate(){
   }catch(e){}
   versionChecking = false;
 }
+function routeHash(){
+  const h = location.hash;
+  if(h === '#inbox' && isSuper()){ S.tab = 'me'; S.page = 'inbox'; refreshPushState().then(render); loadInquiries().then(() => { render(); markInboxSeen(); }).catch(()=>{}); }
+  else if(h === '#pray'){ S.tab = 'pray'; S.page = null; }
+  else if(h === '#bible'){ S.tab = 'bible'; S.page = null; S.bibleView = 'check'; S.jumpToLast = true; S.bookId = null; }
+  if(h){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
+}
+window.addEventListener('hashchange', () => { if(S.ready && ['#inbox','#pray','#bible'].includes(location.hash)){ routeHash(); render(); window.scrollTo(0,0); } });
 function registerSW(){ if(IS_DEMO || !('serviceWorker' in navigator)) return; navigator.serviceWorker.register('sw.js').catch(() => {}); }
 async function refreshPushState(){
   if(IS_DEMO){ PUSH.state = 'demo'; return; }
@@ -1990,12 +2110,12 @@ async function subscribePush(){
   PUSH.state = 'on';
 }
 // 사용자가 누른 순간(클릭 안)에서 불러야 브라우저가 권한 창을 띄워줘요
-function requestPushFromGesture(){
-  if(IS_DEMO || !pushSupported() || !isSuper()) return;
+function requestPushFromGesture(okMsg = '이 기기로 새 문의 알림을 받아요', after){
+  if(IS_DEMO || !pushSupported()) return;
   const perm = Notification.permission === 'default' ? Notification.requestPermission() : Promise.resolve(Notification.permission);
   PUSH.busy = true;
   perm.then(async p => {
-    if(p === 'granted'){ await subscribePush(); toast('이 기기로 새 문의 알림을 받아요'); }
+    if(p === 'granted'){ await subscribePush(); if(okMsg) toast(okMsg); after?.(); }
     else if(p === 'denied') PUSH.state = 'denied';
   }).catch(() => { toast('알림을 켜지 못했어요. 잠시 후 다시 해 주세요.'); })
     .finally(() => { PUSH.busy = false; refreshPushState().then(render); });

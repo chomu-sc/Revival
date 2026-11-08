@@ -5,13 +5,19 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || '기도와 말씀', {
+  const jobs = [];
+  // 안 읽은 문의 수를 앱 아이콘에 숫자로 보여줘요
+  if (typeof d.badge === 'number' && self.navigator && 'setAppBadge' in self.navigator) {
+    jobs.push((d.badge > 0 ? self.navigator.setAppBadge(d.badge) : self.navigator.clearAppBadge()).catch(() => {}));
+  }
+  jobs.push(self.registration.showNotification(d.title || '기도와 말씀', {
     body: d.body || '',
     icon: 'icon-192.png',
     tag: d.tag || undefined,
     renotify: !!d.tag,
     data: { url: d.url || './' },
   }));
+  e.waitUntil(Promise.all(jobs));
 });
 
 self.addEventListener('notificationclick', e => {
