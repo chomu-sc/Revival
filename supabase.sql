@@ -667,3 +667,8 @@ grant update (plan_books, plan_daily) on public.profiles to authenticated;
 -- ─── 업데이트 소식 (2026-11-08) ───
 -- app_news(id, ver, released_on, title, items text[]): 로그인한 사람 모두 읽기, 총 관리자만 쓰기·고치기·지우기
 -- 항목 안의 **굵게** 는 앱에서 굵은 글씨로 보여줘요
+
+-- ─── 새 기도제목 알림 (2026-11-11) ───
+-- notify_prefs(user_id, new_prayer): 본인만 읽기·쓰기
+-- trigger prayers_notify_new: 기도제목이 저장되면, 알림을 켠 같은 서버 사람이 있을 때만 Edge Function notify-prayer 호출 (x-cron-secret)
+-- 알림 실패는 기도제목 저장을 막지 않아요
