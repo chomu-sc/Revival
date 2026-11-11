@@ -453,7 +453,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '1.1-beta.2';
+const APP_VERSION = '1.1';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1353,6 +1353,7 @@ function bookPickHtml(sel){
 }
 /* ─── 업데이트 소식: 서버(app_news)에 저장, 총 관리자가 앱에서 고쳐요 ─── */
 const NEWS_FALLBACK = [
+  {id:-7, ver:'1.1', released_on:'2026-11-12', title:'앱을 함께 나눠요', items:['설정 → **앱 공유하기**에서 QR 코드나 링크로 이 앱을 다른 사람에게 알려줄 수 있어요.','링크 복사, 다른 앱으로 보내기, QR 이미지 저장을 할 수 있어요.']},
   {id:-6, ver:'1.0', released_on:'2026-11-11', title:'「기도와 말씀」 정식 출시', items:['함께해 주신 덕분에 **「기도와 말씀」이 정식으로 출시**되었어요. 고맙습니다!','**새 기도제목 알림**: 우리 서버에 새 기도제목이 올라오면 알려줘요. (설정 → 기도와 말씀 알림)','사소한 버그가 수정되었습니다.']},
   {id:-5, ver:'0.5', released_on:'2026-11-08', title:'기도와 말씀 알림', items:['정한 시간에 **「기도할 시간이에요」**, **「말씀 읽을 시간이에요」**라고 알려줘요. (설정 → 기도와 말씀 알림)','말씀 알림에는 오늘 읽은 분량과 하루 목표가 함께 나와요.','「내 정보」 탭의 이름이 **「설정」**으로 바뀌었어요.']},
   {id:-4, ver:'0.4', released_on:'2026-11-05', title:'업데이트 소식을 한눈에', items:['설정 → **업데이트 소식**에서 앱이 어떻게 바뀌었는지 볼 수 있어요.','새 업데이트가 있으면 **NEW** 표시로 알려줘요.']},

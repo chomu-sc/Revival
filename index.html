@@ -247,6 +247,13 @@ textarea:focus,input:focus{border-color:var(--accent);outline:none}
 .time-input{font:inherit;font-size:17px;font-weight:700;padding:8px 12px;border-radius:12px;border:1.5px solid var(--chip-line);background:var(--surface);color:var(--fg);min-width:120px}
 .time-input:disabled{opacity:.45}
 .remind:not(.on) .remind-time > span:first-child{color:var(--faint)}
+.share-card{align-items:center;text-align:center;gap:14px}
+.share-qr{width:240px;height:240px;border-radius:18px;background:#fff;padding:10px;box-shadow:0 2px 12px var(--shadow)}
+.share-hint{margin:0;font-size:14px;color:var(--muted)}
+.share-url{font-size:15px;font-weight:700;padding:10px 14px;border-radius:12px;background:var(--soft);color:var(--fg);user-select:all;-webkit-user-select:all;word-break:break-all}
+.share-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+.share-btns .btn{box-sizing:border-box;width:100%}
+.share-btns a.btn{text-decoration:none;display:flex;align-items:center;justify-content:center}
 .cheer{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55}
 .cheer p{margin:0}
 .cheer-ic{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:-1px}
@@ -446,7 +453,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -835,6 +842,8 @@ const I = {
   right: s => ic('<path d="m9 6 6 6-6 6"/>',s), left: s => ic('<path d="m15 6-6 6 6 6"/>',s), down: s => ic('<path d="m6 9 6 6 6-6"/>',s),
   shield: s => ic('<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',s),
   copy: s => ic('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',s),
+  link: s => ic('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',s),
+  send: s => ic('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',s),
   gear: s => ic('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',s),
   bell: s => ic('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',s),
   mail: s => ic('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',s),
@@ -1196,7 +1205,7 @@ function calHtml(target, value, min, max){
 const menuRow = (act, label, val, extra='') => `<button class="menu-row" data-act="${act}" ${extra}><span>${label}</span><span class="val">${val}${I.right(18)}</span></button>`;
 function subHead(title, back='설정', backAct='back'){ return `<div class="pad subhead"><button class="back" data-act="${backAct}">${I.left(20)}${back}</button><h1>${title}</h1></div>`; }
 function meHtml(){
-  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, news:pageNews, newsEdit:pageNewsEdit, notify:pageNotify, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
+  if(S.page) return demoBar() + ({nick:pageNick, servers:pageServers, plan:pagePlan, privacy:pagePrivacy, theme:pageTheme, admin:pageAdmin, adminGroup:pageAdminGroup, inquiry:pageInquiry, share:pageShare, news:pageNews, newsEdit:pageNewsEdit, notify:pageNotify, inbox:pageInbox, account:pageAccount, install:pageInstall}[S.page])();
   const p = S.profile, g = curGroup(), pr = computeProgress(p, S.readings);
   const serverSection = (isSuper() && S.groups.length > 1)
     ? `<div class="menu">${menuRow('page','내 서버',`${esc(g?.name || '없음')} 외 ${S.groups.length-1}곳`,'data-v="servers"')}</div>` : '';
@@ -1212,6 +1221,7 @@ function meHtml(){
     <section class="group"><h2>공개와 화면</h2><div class="menu">
       ${menuRow('page','공개 설정',`${p.prayer_anon_default?'익명':'별명'} · 응답 ${p.answer_public_default?'공개':'나만 보기'}`,'data-v="privacy"')}
       ${menuRow('page','화면과 글자 크기',`${{system:'시스템',light:'라이트',dark:'다크'}[S.theme]} · ${fontLabel()}`,'data-v="theme"')}</div></section>
+    <section class="group"><h2>함께하기</h2><div class="menu">${menuRow('page','앱 공유하기', 'QR · 링크', 'data-v="share"')}</div></section>
     <section class="group"><h2>도움</h2><div class="menu">${menuRow('page','홈 화면에 추가하기', isStandalone() ? '사용 중' : '', 'data-v="install"')}${menuRow('page','업데이트 소식', newsUnseen() ? '<span class="pill warn">NEW</span>' : 'v' + esc(newsLatest()?.ver || ''), 'data-v="news"')}${menuRow('page','문의하기', '', 'data-v="inquiry"')}</div></section>
     ${adminSection || isSuper() ? `<section class="group"><h2>관리</h2><div class="menu">${adminSection}${isSuper() ? menuRow('page',`${I.mail(16)} 받은 문의`, unseen ? `<span class="pill warn">새 문의 ${unseen}</span>` : `${S.inbox.filter(q => !q.hidden).length}건`, 'data-v="inbox"') : ''}</div></section>` : ''}
     <button class="btn btn-ghost btn-block" data-act="signOut">로그아웃</button>
@@ -1343,6 +1353,7 @@ function bookPickHtml(sel){
 }
 /* ─── 업데이트 소식: 서버(app_news)에 저장, 총 관리자가 앱에서 고쳐요 ─── */
 const NEWS_FALLBACK = [
+  {id:-7, ver:'1.1', released_on:'2026-11-12', title:'앱을 함께 나눠요', items:['설정 → **앱 공유하기**에서 QR 코드나 링크로 이 앱을 다른 사람에게 알려줄 수 있어요.','링크 복사, 다른 앱으로 보내기, QR 이미지 저장을 할 수 있어요.']},
   {id:-6, ver:'1.0', released_on:'2026-11-11', title:'「기도와 말씀」 정식 출시', items:['함께해 주신 덕분에 **「기도와 말씀」이 정식으로 출시**되었어요. 고맙습니다!','**새 기도제목 알림**: 우리 서버에 새 기도제목이 올라오면 알려줘요. (설정 → 기도와 말씀 알림)','사소한 버그가 수정되었습니다.']},
   {id:-5, ver:'0.5', released_on:'2026-11-08', title:'기도와 말씀 알림', items:['정한 시간에 **「기도할 시간이에요」**, **「말씀 읽을 시간이에요」**라고 알려줘요. (설정 → 기도와 말씀 알림)','말씀 알림에는 오늘 읽은 분량과 하루 목표가 함께 나와요.','「내 정보」 탭의 이름이 **「설정」**으로 바뀌었어요.']},
   {id:-4, ver:'0.4', released_on:'2026-11-05', title:'업데이트 소식을 한눈에', items:['설정 → **업데이트 소식**에서 앱이 어떻게 바뀌었는지 볼 수 있어요.','새 업데이트가 있으면 **NEW** 표시로 알려줘요.']},
@@ -1415,6 +1426,27 @@ function pageNotify(){
     </section>
     ${card('pray')}${card('word')}
     <p class="hint" style="margin:0;text-align:center">알림을 켠 모든 기기로 함께 와요.</p></div>`;
+}
+const SHARE_URL = 'https://chomu-sc.github.io/Revival/';
+const SHARE_TEXT = '기도와 말씀 · 기도제목을 나누고 성경을 함께 읽어요';
+function pageShare(){
+  const canShare = !!navigator.share;
+  return subHead('앱 공유하기') + `<div class="settings pad">
+    <section class="panel share-card">
+      <img class="share-qr" src="share-qr.png" alt="기도와 말씀 앱 주소 QR 코드" width="240" height="240">
+      <div class="share-url num">${esc(SHARE_URL.replace(/^https:\/\//, ''))}</div>
+      <div class="share-btns">
+        <button class="btn btn-accent btn-block" data-act="copyShare">${I.link(18)}링크 복사</button>
+        ${canShare ? `<button class="btn btn-ghost btn-block" data-act="nativeShare">${I.send(18)}다른 앱으로 보내기</button>` : ''}
+        <a class="btn btn-ghost btn-block" href="share-qr.png" download="기도와말씀_QR.png">QR 이미지 저장</a>
+      </div>
+    </section>
+    <p class="hint" style="margin:0;text-align:center">처음 가입할 때는 서버 입장 코드가 필요해요.<br>입장 코드는 서버 관리자에게 물어보면 돼요.</p>
+  </div>`;
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  try{ const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly',''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; }catch(e){ return false; }
 }
 function pagePrivacy(){
   const p = S.profile;
@@ -1864,6 +1896,8 @@ const ACT = {
       if((d.daily || 0) !== prevDaily){ try{ await API.setDailyGoal(d.daily || null); }catch(e){} }
       await loadRecords(); syncAchievement(); S.testament = null; S.bookId = null; S.page = null; S.cal = null; await loadGroupData(); toast('통독 목표를 저장했어요'); });
   },
+  async copyShare(){ const ok = await copyText(`${SHARE_TEXT}\n${SHARE_URL}`); toast(ok ? '링크를 복사했어요. 원하는 곳에 붙여 넣어 주세요' : '복사하지 못했어요. 주소를 길게 눌러 복사해 주세요'); },
+  async nativeShare(){ try{ await navigator.share({title:'기도와 말씀', text:SHARE_TEXT, url:SHARE_URL}); }catch(e){ if(e?.name !== 'AbortError') ACT.copyShare(); } },
   newsEdit(d){
     const n = d.id === 'new' ? null : newsList().find(x => String(x.id) === String(d.id));
     const today = appToday();
