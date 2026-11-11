@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const id = Number(body?.prayer_id);
     if (!Number.isFinite(id)) return json({ error: 'bad request' }, 400);
 
-    const { data: p } = await admin.from('prayers').select('id, user_id, group_id, content, is_anonymous, created_at').eq('id', id).maybeSingle();
+    const { data: p } = await admin.from('prayers').select('id, user_id, group_id, created_at').eq('id', id).maybeSingle();
     if (!p || !p.group_id) return json({ skipped: 'not found' });
     if (Date.now() - new Date(p.created_at).getTime() > 10 * 60 * 1000) return json({ skipped: 'old' });
 
@@ -32,18 +32,8 @@ Deno.serve(async (req) => {
     const { data: subs } = await admin.from('push_subscriptions').select('endpoint, p256dh, auth').in('user_id', ids);
     if (!subs?.length) return json({ sent: 0 });
 
-    let who = '익명';
-    if (!p.is_anonymous) {
-      const { data: prof } = await admin.from('profiles').select('nickname').eq('id', p.user_id).maybeSingle();
-      who = prof?.nickname || '누군가';
-    }
-    const text = String(p.content).replace(/\s+/g, ' ').trim();
-    const payload = JSON.stringify({
-      title: '새 기도제목이 올라왔어요',
-      body: `${who}: ${text.length > 60 ? text.slice(0, 60) + '…' : text}`,
-      tag: `prayer-${p.id}`,
-      url: './#pray',
-    });
+    // 잠금 화면에 내용이 보이지 않도록, 알림에는 제목만 담아요
+    const payload = JSON.stringify({ title: '새 기도제목이 올라왔어요', body: '', tag: `prayer-${p.id}`, url: './#pray' });
 
     webpush.setVapidDetails('mailto:joseungchan164@gmail.com', keys.vapid_public, keys.vapid_private);
     let sent = 0;

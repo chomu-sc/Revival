@@ -446,7 +446,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '0.5';
+const APP_VERSION = '1.0';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -668,6 +668,8 @@ function supabaseApi(){
     loadNews: () => sb.from('app_news').select('*').order('released_on', {ascending:false}).order('id', {ascending:false}).then(chk),
     saveNews: o => (o.id ? sb.from('app_news').update({ver:o.ver, released_on:o.released_on, title:o.title, items:o.items, updated_at:new Date().toISOString()}).eq('id', o.id) : sb.from('app_news').insert({ver:o.ver, released_on:o.released_on, title:o.title, items:o.items})).then(chk),
     deleteNews: id => sb.from('app_news').delete().eq('id', id).then(chk),
+    loadNotifyPrefs: () => sb.from('notify_prefs').select('new_prayer').maybeSingle().then(chk),
+    saveNotifyPrefs: newPrayer => sb.from('notify_prefs').upsert({user_id:uid(), new_prayer:newPrayer, updated_at:new Date().toISOString()}, {onConflict:'user_id'}).then(chk),
     loadReminders: () => sb.from('reminders').select('kind,at_time,enabled').then(chk),
     saveReminder: (kind, at_time, enabled) => sb.from('reminders').upsert({user_id:uid(), kind, at_time, enabled}, {onConflict:'user_id,kind'}).then(chk),
     loadInquirySeen: () => sb.from('inquiry_reads').select('seen_at').maybeSingle().then(chk),
@@ -801,6 +803,8 @@ function demoApi(){
     async removeInquiryPhotos(){ },
     async savePush(){ }, async removePush(){ }, async hasPush(){ return false; },
     async loadReminders(){ return (db.reminders||[]).slice(); },
+    async loadNotifyPrefs(){ return db.notifyPrefs || null; },
+    async saveNotifyPrefs(v){ db.notifyPrefs = {new_prayer:v}; save(); },
     async loadNews(){ if(!db.news) db.news = NEWS_FALLBACK.map((n,i) => ({...n, id:NEWS_FALLBACK.length - i})); return db.news.slice().sort((a,b) => a.released_on < b.released_on ? 1 : a.released_on > b.released_on ? -1 : b.id - a.id); },
     async saveNews(o){ if(o.id){ db.news = db.news.map(n => n.id === o.id ? {...n, ...o} : n); } else db.news.push({...o, id: Math.max(0, ...db.news.map(n => n.id)) + 1}); save(); },
     async deleteNews(id){ db.news = db.news.filter(n => n.id !== id); save(); },
@@ -1339,6 +1343,7 @@ function bookPickHtml(sel){
 }
 /* ─── 업데이트 소식: 서버(app_news)에 저장, 총 관리자가 앱에서 고쳐요 ─── */
 const NEWS_FALLBACK = [
+  {id:-6, ver:'1.0', released_on:'2026-11-11', title:'「기도와 말씀」 정식 출시', items:['함께해 주신 덕분에 **「기도와 말씀」이 정식으로 출시**되었어요. 고맙습니다!','**새 기도제목 알림**: 우리 서버에 새 기도제목이 올라오면 알려줘요. (설정 → 기도와 말씀 알림)','사소한 버그가 수정되었습니다.']},
   {id:-5, ver:'0.5', released_on:'2026-11-08', title:'기도와 말씀 알림', items:['정한 시간에 **「기도할 시간이에요」**, **「말씀 읽을 시간이에요」**라고 알려줘요. (설정 → 기도와 말씀 알림)','말씀 알림에는 오늘 읽은 분량과 하루 목표가 함께 나와요.','「내 정보」 탭의 이름이 **「설정」**으로 바뀌었어요.']},
   {id:-4, ver:'0.4', released_on:'2026-11-05', title:'업데이트 소식을 한눈에', items:['설정 → **업데이트 소식**에서 앱이 어떻게 바뀌었는지 볼 수 있어요.','새 업데이트가 있으면 **NEW** 표시로 알려줘요.']},
   {id:-3, ver:'0.3', released_on:'2026-11-04', title:'통독 목표가 더 자유로워졌어요', items:['통독 범위를 구약·신약뿐 아니라 **성경 권 단위로 직접 고를 수** 있어요. (설정 → 통독 목표 → 직접 고르기)','**하루 목표 장 수**를 정할 수 있어요. 성경 탭에서 「오늘 목표」를 막대로 확인하고, 통계에서 이대로 읽으면 언제 끝나는지 알려줘요.','목표를 다 읽으면 **완독 기록**에 언제부터 언제까지 무엇을 읽었는지 남아요.','하루 목표를 정하면 **달력으로 달별 기록**을 볼 수 있어요.','사소한 버그가 수정되었습니다.']},
@@ -1382,11 +1387,15 @@ const REMIND = {pray:{label:'기도 알림', desc:'「기도할 시간이에요�
 const hhmm = t => String(t || '').slice(0,5);
 function reminderLabel(){
   const on = (S.reminders || []).filter(r => r.enabled);
-  if(!on.length) return '꺼짐';
-  return ['pray','word'].map(k => on.find(r => r.kind === k)).filter(Boolean).map(r => `${r.kind === 'pray' ? '기도' : '말씀'} ${fmtTime(r.at_time)}`).join(' · ');
+  const parts = ['pray','word'].map(k => on.find(r => r.kind === k)).filter(Boolean).map(r => `${r.kind === 'pray' ? '기도' : '말씀'} ${fmtTime(r.at_time)}`);
+  if(S.notifyNewPrayer) parts.push('새 기도제목');
+  return parts.length ? parts.join(' · ') : '꺼짐';
 }
 function fmtTime(t){ const [h,m] = hhmm(t).split(':').map(Number); if(isNaN(h)) return ''; return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${pad2(m)}`; }
-async function loadReminders(){ try{ S.reminders = (await API.loadReminders()) || []; }catch(e){ S.reminders = S.reminders || []; } }
+async function loadReminders(){
+  try{ S.reminders = (await API.loadReminders()) || []; }catch(e){ S.reminders = S.reminders || []; }
+  try{ const p = await API.loadNotifyPrefs(); S.notifyNewPrayer = !!p?.new_prayer; }catch(e){}
+}
 function openNotifyPage(){ refreshPushState().then(render); loadReminders().then(render); }
 function pageNotify(){
   const st = PUSH.state, get = k => (S.reminders || []).find(r => r.kind === k);
@@ -1401,6 +1410,9 @@ function pageNotify(){
       <div class="remind-time"><span>매일</span><input type="time" class="time-input" id="remind-${k}" data-k="${k}" value="${t}" ${on ? '' : 'disabled'} aria-label="${REMIND[k].label} 시간"><span class="hint">${on ? fmtTime(t) + '에 알려줘요' : '꺼져 있어요'}</span></div></section>`; };
   return subHead('기도와 말씀 알림') + `<div class="settings pad">
     ${status ? `<section class="panel push-panel"><div class="push-row">${I.bell(20)}<p>${status}</p></div>${st === 'ios-install' ? `<button class="btn btn-ghost btn-block" data-act="page" data-v="install">홈 화면에 추가하는 방법</button>` : ''}</section>` : ''}
+    <section class="panel remind ${S.notifyNewPrayer ? 'on' : ''}">
+      <label class="switchrow"><span><b>새 기도제목 알림</b><small>우리 서버에 새 기도제목이 올라오면 바로 알려줘요</small></span><input class="sw" type="checkbox" data-act="newPrayerToggle" ${S.notifyNewPrayer ? 'checked' : ''}></label>
+    </section>
     ${card('pray')}${card('word')}
     <p class="hint" style="margin:0;text-align:center">알림을 켠 모든 기기로 함께 와요.</p></div>`;
 }
@@ -1860,6 +1872,16 @@ const ACT = {
   },
   newsBack(){ S.page = 'news'; S.draft.news = null; render(); window.scrollTo(0,0); },
   newsDelete(){ const id = S.draft.news?.id; if(!id) return; askConfirm('이 소식을 지울까요?', '모든 사람의 업데이트 소식에서 사라지고, 되돌릴 수 없어요.', '지우기', async () => { await API.deleteNews(id); await loadNews(); if(!S.news?.length) S.news = []; S.page = 'news'; S.draft.news = null; toast('소식을 지웠어요'); }); },
+  newPrayerToggle(d, el){
+    const on = el.checked;
+    const save = () => guard(async () => { await API.saveNotifyPrefs(on); S.notifyNewPrayer = on; toast(on ? '새 기도제목이 올라오면 알려줘요' : '새 기도제목 알림을 껐어요'); });
+    if(on && !IS_DEMO && pushSupported() && PUSH.state !== 'on'){
+      if(Notification.permission === 'denied'){ el.checked = false; PUSH.state = 'denied'; render(); toast('휴대폰 설정에서 알림을 허용해 주세요'); return; }
+      requestPushFromGesture('', save); return;
+    }
+    if(on && !IS_DEMO && !pushSupported()){ el.checked = false; toast(deviceKind() === 'ios' && !isStandalone() ? '홈 화면에 추가한 앱에서 켤 수 있어요' : '이 브라우저는 알림을 지원하지 않아요'); return; }
+    save();
+  },
   remindToggle(d, el){
     const k = d.k, on = el.checked, t = document.getElementById('remind-' + k)?.value || REMIND[k].def;
     const save = () => guard(async () => { await API.saveReminder(k, t, on); await loadReminders(); toast(on ? `매일 ${fmtTime(t)}에 ${k === 'pray' ? '기도' : '말씀'} 알림을 보내요` : '알림을 껐어요'); });
