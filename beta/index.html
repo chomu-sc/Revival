@@ -453,7 +453,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '1.1-beta.1';
+const APP_VERSION = '1.1-beta.2';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -1433,7 +1433,6 @@ function pageShare(){
   return subHead('앱 공유하기') + `<div class="settings pad">
     <section class="panel share-card">
       <img class="share-qr" src="share-qr.png" alt="기도와 말씀 앱 주소 QR 코드" width="240" height="240">
-      <p class="share-hint">휴대폰 카메라로 QR을 비추면 바로 열려요</p>
       <div class="share-url num">${esc(SHARE_URL.replace(/^https:\/\//, ''))}</div>
       <div class="share-btns">
         <button class="btn btn-accent btn-block" data-act="copyShare">${I.link(18)}링크 복사</button>
