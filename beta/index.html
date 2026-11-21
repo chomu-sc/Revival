@@ -455,7 +455,7 @@ const IS_BETA = /\/beta\//.test(location.pathname);
 const LS_PREFIX = IS_BETA ? 'beta:' : '';
 if(IS_BETA) document.title = '기도와 말씀 (테스트)';
 if(IS_BETA) document.addEventListener('DOMContentLoaded', () => document.body.insertAdjacentHTML('beforeend', '<div class="beta-badge">테스트 앱</div>'));
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3-beta.1';
 const VAPID_PUBLIC_KEY = 'BLz9DiikcvYAmY3cCamXcZpet5gv1s4eKe3ieIOAO95VRYIWu0AaZ63Bvj_gfM6av-RNrgcDdTo1IJff2OY1168';
 
 /* ─── 성경 ─── */
@@ -613,6 +613,9 @@ function supabaseApi(){
     lastGroup: () => rpc('my_last_group'),
     signOut: () => sb.auth.signOut(),
     resetPassword: email => sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname}).then(chk),
+    loginStatus: email => rpc('login_status', {p_email:email}),
+    loginFailed: email => rpc('login_failed', {p_email:email}),
+    loginSucceeded: () => rpc('login_succeeded'),
     resendSignup: email => sb.auth.resend({type:'signup', email, options:{emailRedirectTo: location.origin + location.pathname}}).then(chk),
     updatePassword: password => sb.auth.updateUser({password}).then(chk),
     async deleteAccount(pw){ await rpc('delete_my_account', {p_password:pw}); try{ await sb.auth.signOut({scope:'local'}); }catch(e){} },
@@ -752,6 +755,7 @@ function demoApi(){
     async lastGroup(){ const m = db.members.filter(x => x.user_id === ME).sort((a,b) => new Date(b.joined_at) - new Date(a.joined_at))[0]; return m ? m.group_id : null; },
     async signOut(){ db.session = false; save(); },
     async resetPassword(){ }, async resendSignup(){ },
+    async loginStatus(){ return 0; }, async loginFailed(){ return {left:4, locked:0}; }, async loginSucceeded(){ },
     async updatePassword(){ },
     async deleteAccount(pw){ if(db.profile.is_super_admin) throw {message:'SUPER_ADMIN'}; if(String(pw).length < 6) throw {message:'BAD_PASSWORD'}; db = seed(); db.session = false; save(); },
     async loadProfile(){ return {...db.profile}; },
@@ -1511,6 +1515,7 @@ function recoveryHtml(){
       <button class="btn btn-accent btn-block" type="submit" ${S.busy?'disabled':''}>비밀번호 바꾸기</button>
     </form></div>`;
 }
+function lockMsg(sec){ const m = Math.ceil(sec / 60); return `비밀번호를 5번 틀려서 잠시 로그인을 막았어요. ${m}분 뒤에 다시 해 주세요. 비밀번호가 기억나지 않으면 「비밀번호를 잊으셨나요?」를 눌러 주세요.`; }
 const RESEND_GAP = 60;
 function resendHtml(kind){
   const r = S.resend;
@@ -1717,7 +1722,7 @@ async function boot(){
   try{
     const [profile, readings] = await Promise.all([API.loadProfile(), API.loadReadings()]);
     S.profile = profile; S.readings = readings || [];
-    await loadRecords(); await loadReminders(); await loadNews(); syncAchievement().then(ok => { if(ok) render(); });
+    await loadRecords(); await loadReminders(); await loadNews(); if(!IS_DEMO) API.loginSucceeded().catch(() => {}); syncAchievement().then(ok => { if(ok) render(); });
     if(S.pendingCode){ const c = S.pendingCode; S.pendingCode = null; try{ S.groupId = await API.joinGroup(c); lsSet('groupId', S.groupId); S.codeMsg = null; }catch(e){ S.codeMsg = errMsg(e); } }
     await loadGroups(); await loadGroupData(); await loadInquiries();
   }catch(e){ toast(errMsg(e)); }
@@ -1988,7 +1993,22 @@ const FORMS = {
           if(!code){ S.authMsg = {text:'서버 입장 코드를 입력해 주세요.'}; return; }
           if(!(await API.checkCode(code))){ S.authMsg = {text:errMsg({message:'BAD_CODE'})}; return; }
         }
-        const data = signup ? await API.signUp(email, pw, code) : await API.signIn(email, pw);
+        if(!signup){
+          let wait = 0; try{ wait = Number(await API.loginStatus(email)) || 0; }catch(e){}
+          if(wait > 0){ S.authMsg = {text:lockMsg(wait)}; return; }
+        }
+        let data;
+        try{ data = signup ? await API.signUp(email, pw, code) : await API.signIn(email, pw); }
+        catch(e){
+          if(!signup && String(e?.message||'').includes('Invalid login')){
+            let r = null; try{ r = await API.loginFailed(email); }catch(_){}
+            S.draft.auth.pw = '';
+            S.authMsg = {text: r?.locked > 0 ? lockMsg(r.locked) : `이메일이나 비밀번호가 맞지 않아요.${r && r.left < 5 ? ` (남은 기회 ${r.left}번)` : ''}`};
+            return;
+          }
+          throw e;
+        }
+        if(!signup && data?.session) API.loginSucceeded().catch(() => {});
         if(signup && !data?.session && data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){ S.authMode = 'login'; S.draft.auth.code = ''; S.authMsg = {text:'이미 가입된 이메일이에요. 로그인해 주세요. 비밀번호가 기억나지 않으면 관리자에게 문의해 주세요.'}; return; }
         if(data?.session){ S.resend = null; S.draft.auth = null; S.session = data.session; S.groupId = null; S.ready = false; render(); await boot(); }
         else if(signup){ S.resend = {kind:'signup', email, at:Date.now()}; S.draft.auth.pw = ''; S.draft.auth.pw2 = ''; S.draft.auth.code = ''; S.authMode = 'login'; S.authMsg = {ok:true, text:`${email}로 확인 메일을 보냈어요. 메일의 「가입 확인」 링크를 누르면 바로 로그인돼요. 메일이 안 보이면 스팸함도 확인해 주세요.`}; }

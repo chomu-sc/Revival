@@ -672,3 +672,9 @@ grant update (plan_books, plan_daily) on public.profiles to authenticated;
 -- notify_prefs(user_id, new_prayer): 본인만 읽기·쓰기
 -- trigger prayers_notify_new: 기도제목이 저장되면, 알림을 켠 같은 서버 사람이 있을 때만 Edge Function notify-prayer 호출 (x-cron-secret)
 -- 알림 실패는 기도제목 저장을 막지 않아요
+
+-- ─── 보안 점검 (2026-11-21) ───
+-- profiles insert, prayer_marks/readings update 권한 회수, notify_new_prayer RPC 실행 권한 회수
+-- prayers 작성 시각은 서버 시간으로 고정 (trigger prayers_fix_created), 기간은 최대 400일
+-- login_attempts: 로그인 5번 실패 → 10분 잠금 (이메일+접속 주소의 해시로만 저장, 하루 지나면 지움)
+--   login_status(email), login_failed(email): 로그인 전 누구나 / login_succeeded(): 로그인한 본인
